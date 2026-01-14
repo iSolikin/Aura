@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой первый Telegram Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .user-info {
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .user-info p {
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+        
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            background-color: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        button:hover {
+            opacity: 0.8;
+        }
+        
+        button:active {
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>👋 Добро пожаловать!</h1>
+        
+        <div class="user-info" id="userInfo">
+            <p>Загрузка информации...</p>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="sendData()">Отправить данные боту</button>
+            <button onclick="closeApp()">Закрыть приложение</button>
+        </div>
+    </div>
+
+    <script>
+        // Инициализируем Web App
+        const tg = window.Telegram.WebApp;
+        
+        // Расширяем приложение на весь экран
+        tg.expand();
+        
+        // Показываем информацию о пользователе
+        function displayUserInfo() {
+            const initData = tg.initData;
+            const user = tg.initDataUnsafe.user;
+            
+            if (user) {
+                document.getElementById('userInfo').innerHTML = `
+                    <p><strong>Имя:</strong> ${user.first_name} ${user.last_name || ''}</p>
+                    <p><strong>ID:</strong> ${user.id}</p>
+                    <p><strong>Username:</strong> ${user.username || 'не указан'}</p>
+                    <p><strong>Язык:</strong> ${user.language_code || 'не указан'}</p>
+                `;
+            }
+        }
+        
+        // Отправляем данные боту
+        function sendData() {
+            const user = tg.initDataUnsafe.user;
+            const data = {
+                userId: user.id,
+                firstName: user.first_name,
+                message: 'Привет от Web App!'
+            };
+            
+            // Отправляем данные обратно в бот
+            tg.sendData(JSON.stringify(data));
+            
+            // Показываем уведомление
+            tg.showAlert('Данные отправлены! ✅');
+        }
+        
+        // Закрываем приложение
+        function closeApp() {
+            tg.close();
+        }
+        
+        // Инициализируем при загрузке
+        window.addEventListener('load', () => {
+            tg.ready(); // Сообщаем Telegram, что мы готовы
+            displayUserInfo();
+        });
+    </script>
+</body>
+</html>
