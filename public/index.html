@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aura – трекер сна и веса</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
 
@@ -725,13 +727,29 @@
         <div class="card">
             <div class="card-content">
                 <div class="card-title">📈 История (7 дней)</div>
-                <div style="margin-bottom: 14px;">
-                    <div class="small" style="margin-bottom: 8px;">🌙 СОН:</div>
-                    <div id="sleep-list"></div>
+                
+                <!-- ГРАФИКИ -->
+                <div id="charts-container" style="margin-bottom: 20px;">
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 12px; color: #aaa; margin-bottom: 8px; text-transform: uppercase;">🌙 Сон (часы)</div>
+                        <canvas id="sleepChart" style="max-height: 200px;"></canvas>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #aaa; margin-bottom: 8px; text-transform: uppercase;">⚖️ Вес (кг)</div>
+                        <canvas id="weightChart" style="max-height: 200px;"></canvas>
+                    </div>
                 </div>
-                <div>
-                    <div class="small" style="margin-bottom: 8px;">⚖️ ВЕС:</div>
-                    <div id="weight-list"></div>
+
+                <!-- ИСТОРИЯ -->
+                <div style="border-top: 1px solid rgba(124, 58, 237, 0.15); padding-top: 16px;">
+                    <div style="margin-bottom: 14px;">
+                        <div class="small" style="margin-bottom: 8px;">🌙 СОН:</div>
+                        <div id="sleep-list"></div>
+                    </div>
+                    <div>
+                        <div class="small" style="margin-bottom: 8px;">⚖️ ВЕС:</div>
+                        <div id="weight-list"></div>
+                    </div>
                 </div>
             </div>
         </div>
