@@ -548,15 +548,23 @@
 
     function switchTab(name) {
         document.querySelectorAll('.tab-panel').forEach(p => {
-            p.style.display = p.id === 'tab-' + name ? 'block' : 'none';
+            p.style.display = 'none';
         });
+        document.getElementById('tab-' + name).style.display = 'block';
+
         document.querySelectorAll('.nav-item').forEach(n => {
-            n.classList.toggle('active', n.dataset.tab === name);
+            n.classList.remove('active');
         });
+        document.querySelector(`[data-tab="${name}"]`).classList.add('active');
+
+        if (name === 'history') {
+            loadHistory();
+        }
     }
 
     function navClick(el) {
-        switchTab(el.dataset.tab);
+        const tabName = el.getAttribute('data-tab');
+        switchTab(tabName);
     }
 
     async function postJson(path, body) {
@@ -724,6 +732,10 @@
                     setStatus(`Сохранено: ${json.calculated.hours}ч, качество ${json.calculated.quality}/10 ✨`, 'ok');
                     loadTodaySummary();
                     tg.HapticFeedback?.notificationOccurred('success');
+                    document.getElementById('sleep-notes').value = '';
+                    document.getElementById('sleep-start').value = '';
+                    document.getElementById('sleep-end').value = '';
+                    document.getElementById('sleep-calc').style.display = 'none';
                 } else {
                     setStatus('Ошибка', 'err');
                     tg.HapticFeedback?.notificationOccurred('error');
@@ -760,6 +772,8 @@
                     setStatus(`Сохранено: ${weight}кг ✨`, 'ok');
                     loadTodaySummary();
                     tg.HapticFeedback?.notificationOccurred('success');
+                    document.getElementById('weight-notes').value = '';
+                    document.getElementById('weight-value').value = '';
                 } else {
                     setStatus('Ошибка', 'err');
                     tg.HapticFeedback?.notificationOccurred('error');
@@ -769,16 +783,6 @@
                 setStatus('Ошибка сети', 'err');
             }
         });
-
-        // Загрузка истории при открытии вкладки
-        const observer = new MutationObserver(() => {
-            const historyTab = document.getElementById('tab-history');
-            if (historyTab && historyTab.style.display !== 'none') {
-                loadHistory();
-            }
-        });
-
-        observer.observe(document.getElementById('tab-history'), { attributes: true });
     });
 </script>
 </body>
