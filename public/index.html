@@ -792,10 +792,17 @@
     let sleepChartInstance = null;
     let weightChartInstance = null;
 
-    function setStatus(msg, type = '') {
+    function setStatus(msg, type = '', duration = 3000) {
         const el = document.getElementById('status');
         el.textContent = msg;
         el.className = 'status ' + (type || '');
+        el.classList.remove('hide-status');
+
+        if (type === 'ok' || type === 'err') {
+            setTimeout(() => {
+                el.classList.add('hide-status');
+            }, duration);
+        }
     }
 
     function showGreeting(text) {
@@ -1349,7 +1356,7 @@
             });
 
             if (result.ok) {
-                setStatus('✅ Сон сохранён', 'ok');
+                setStatus('✅ Сон сохранён', 'ok', 2500);
                 document.getElementById('sleep-date').value = isoDateToday();
                 document.getElementById('sleep-start').value = '';
                 document.getElementById('sleep-end').value = '';
@@ -1386,7 +1393,7 @@
             });
 
             if (result.ok) {
-                setStatus('✅ Вес сохранён', 'ok');
+                setStatus('✅ Вес сохранён', 'ok', 2500);
                 document.getElementById('weight-date').value = isoDateToday();
                 document.getElementById('weight-value').value = '';
                 document.getElementById('weight-notes').value = '';
@@ -1419,7 +1426,7 @@
             });
 
             if (result.ok) {
-                setStatus('✅ Цели сохранены', 'ok');
+                setStatus('✅ Цели сохранены', 'ok', 2500);
                 setTimeout(() => {
                     loadTodaySummary();
                     switchTab('home');
