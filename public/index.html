@@ -257,12 +257,16 @@
         }
 
         .status {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 4px;
             font-size: 13px;
-            margin-bottom: 14px;
+            margin: 0;
             color: #aaa;
-            padding: 12px 14px;
+            padding: 8px 14px;
             border-radius: 10px;
-            background: rgba(124, 58, 237, 0.1);
+            background: rgba(124, 58, 237, 0.12);
             border-left: 3px solid #7c3aed;
             backdrop-filter: blur(10px);
             animation: slideInDown 0.3s ease;
@@ -429,14 +433,46 @@
             text-align: center;
             letter-spacing: 0.5px;
         }
+
+        .header-wrap {
+            position: relative;
+            height: 56px; /* фиксированная высота под приветствие/логотип */
+            margin-bottom: 8px;
+        }
+
+        #aura-title {
+            font-size: 32px;
+            text-align: center;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4, #0ea5e9, #7c3aed);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 6s ease infinite;
+            font-weight: 700;
+            letter-spacing: -1px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        /* активное состояние – логотип на месте */
+        #aura-title.title-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+
+
     </style>
 </head>
 <body>
 <div class="app">
-    <h1>✨ Aura</h1>
+    <div class="header-wrap">
+        <h1 id="aura-title">✨ Aura</h1>
 
-    <!-- СТАТУС -->
-    <div class="status" id="status">Загружаю...</div>
+        <!-- СТАТУС -->
+        <div class="status" id="status">Загружаю...</div>
+    </div>
 
     <!-- БЛОК ГЛАВНОЙ -->
     <div class="tab-panel" id="tab-home">
@@ -639,15 +675,19 @@
     }
 
         function showGreeting(text) {
-        const el = document.getElementById('status');
-        el.textContent = text;
-        el.className = 'status ok';
+            const status = document.getElementById('status');
+            const title = document.getElementById('aura-title');
 
-        // показываем 2.5 секунды, потом прячем
-        setTimeout(() => {
-            el.classList.add('hide-status');
-        }, 2500);
-    }
+            status.textContent = text;
+            status.className = 'status ok';
+            title.classList.remove('title-visible');
+
+            // показать приветствие, потом скрыть и показать Aura
+            setTimeout(() => {
+                status.classList.add('hide-status');
+                title.classList.add('title-visible');
+            }, 2500);
+        }
 
 
     function initUser() {
@@ -657,24 +697,15 @@
                 setStatus('Ошибка при загрузке', 'err');
                 return;
             }
-
-
-
             telegramId = user.id;
 
             const name = user.first_name || 'друже';
-
             const hour = new Date().getHours();
             let greet;
-            if (hour >= 5 && hour < 12) {
-                greet = 'Доброе утро';
-            } else if (hour >= 12 && hour < 18) {
-                greet = 'Добрый день';
-            } else if (hour >= 18 && hour < 23) {
-                greet = 'Добрый вечер';
-            } else {
-                greet = 'Доброй ночи';
-            }
+            if (hour >= 5 && hour < 12) greet = 'Доброе утро';
+            else if (hour >= 12 && hour < 18) greet = 'Добрый день';
+            else if (hour >= 18 && hour < 23) greet = 'Добрый вечер';
+            else greet = 'Доброй ночи';
 
             showGreeting(`${greet}, ${name}! ✨`);
 
@@ -684,6 +715,7 @@
             setStatus('Ошибка инициализации', 'err');
         }
     }
+
 
 
     function isoDateToday() {
