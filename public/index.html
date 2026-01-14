@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой первый Telegram Mini App</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aura – трекер сна и веса</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -11,125 +11,412 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            padding: 20px;
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            min-height: 100vh;
+            background-color: #f5f5f5;
+            color: #111;
         }
-        
-        .container {
-            max-width: 500px;
+
+        .app {
+            max-width: 520px;
             margin: 0 auto;
+            padding: 16px;
         }
-        
+
         h1 {
-            margin-bottom: 20px;
+            font-size: 24px;
+            margin-bottom: 12px;
             text-align: center;
         }
-        
-        .user-info {
-            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .user-info p {
-            margin: 10px 0;
-            word-break: break-all;
-        }
-        
-        .button-group {
+
+        .tabs {
             display: flex;
-            gap: 10px;
-            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
         }
-        
-        button {
-            padding: 12px 20px;
-            font-size: 16px;
-            background-color: var(--tg-theme-button-color, #0088cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .tab.active {
+            background-color: #0088cc;
+            color: #fff;
+            border-color: #0088cc;
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .field {
+            margin-bottom: 10px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .field input,
+        .field textarea,
+        .field select {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+
+        .field textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+            background-color: #0088cc;
+            color: #fff;
             border: none;
             border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
-            transition: opacity 0.2s;
         }
-        
-        button:hover {
+
+        .btn-primary:active {
             opacity: 0.8;
         }
-        
-        button:active {
-            opacity: 0.6;
+
+        .status {
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .status.ok {
+            color: #2e7d32;
+        }
+
+        .status.err {
+            color: #c62828;
+        }
+
+        .list-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-label {
+            font-weight: 600;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #777;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>👋 Добро пожаловать!</h1>
-        
-        <div class="user-info" id="userInfo">
-            <p>Загрузка информации...</p>
+<div class="app">
+    <h1>👋 Aura – трекер</h1>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="sleep">Сон</div>
+        <div class="tab" data-tab="weight">Вес</div>
+        <div class="tab" data-tab="dashboard">Дашборд</div>
+    </div>
+
+    <!-- СТАТУС -->
+    <div class="status" id="status">Инициализация...</div>
+
+    <!-- БЛОК СНА -->
+    <div class="card tab-panel" id="tab-sleep">
+        <div class="card-title">Записать сон за день</div>
+
+        <div class="field">
+            <label for="sleep-date">Дата</label>
+            <input type="date" id="sleep-date" />
         </div>
-        
-        <div class="button-group">
-            <button onclick="sendData()">Отправить данные боту</button>
-            <button onclick="closeApp()">Закрыть приложение</button>
+
+        <div class="field">
+            <label for="sleep-hours">Часы сна</label>
+            <input type="number" id="sleep-hours" min="0" max="24" step="0.5" placeholder="Например, 7.5" />
+        </div>
+
+        <div class="field">
+            <label for="sleep-quality">Качество сна (1–10)</label>
+            <input type="number" id="sleep-quality" min="1" max="10" step="1" placeholder="Например, 8" />
+        </div>
+
+        <div class="field">
+            <label for="sleep-notes">Заметки (опционально)</label>
+            <textarea id="sleep-notes" placeholder="Во сколько лёг / во сколько встал, как чувствовал себя утром..."></textarea>
+        </div>
+
+        <button class="btn-primary" id="btn-save-sleep">Сохранить сон</button>
+    </div>
+
+    <!-- БЛОК ВЕСА -->
+    <div class="card tab-panel" id="tab-weight" style="display:none;">
+        <div class="card-title">Записать вес за день</div>
+
+        <div class="field">
+            <label for="weight-date">Дата</label>
+            <input type="date" id="weight-date" />
+        </div>
+
+        <div class="field">
+            <label for="weight-value">Вес (кг)</label>
+            <input type="number" id="weight-value" min="0" max="300" step="0.1" placeholder="Например, 72.4" />
+        </div>
+
+        <div class="field">
+            <label for="weight-notes">Заметки (опционально)</label>
+            <textarea id="weight-notes" placeholder="Например, изменения в рационе или тренировках"></textarea>
+        </div>
+
+        <button class="btn-primary" id="btn-save-weight">Сохранить вес</button>
+    </div>
+
+    <!-- ДАШБОРД -->
+    <div class="card tab-panel" id="tab-dashboard" style="display:none;">
+        <div class="card-title">Последние 7 дней</div>
+        <div class="field">
+            <div class="small">Сон:</div>
+            <div id="sleep-list"></div>
+        </div>
+
+        <div class="field">
+            <div class="small">Вес:</div>
+            <div id="weight-list"></div>
         </div>
     </div>
 
-    <script>
-        // Инициализируем Web App
-        const tg = window.Telegram.WebApp;
-        
-        // Расширяем приложение на весь экран
-        tg.expand();
-        
-        // Показываем информацию о пользователе
-        function displayUserInfo() {
-            const initData = tg.initData;
-            const user = tg.initDataUnsafe.user;
-            
-            if (user) {
-                document.getElementById('userInfo').innerHTML = `
-                    <p><strong>Имя:</strong> ${user.first_name} ${user.last_name || ''}</p>
-                    <p><strong>ID:</strong> ${user.id}</p>
-                    <p><strong>Username:</strong> ${user.username || 'не указан'}</p>
-                    <p><strong>Язык:</strong> ${user.language_code || 'не указан'}</p>
-                `;
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    let telegramId = null;
+
+    function setStatus(msg, type = '') {
+        const el = document.getElementById('status');
+        el.textContent = msg;
+        el.className = 'status ' + (type || '');
+    }
+
+    function initUser() {
+        try {
+            const user = tg.initDataUnsafe?.user;
+            if (!user) {
+                setStatus('Не удалось получить данные пользователя из Telegram', 'err');
+                return;
             }
+            telegramId = user.id;
+            setStatus('Пользователь: ' + (user.username || user.first_name), 'ok');
+        } catch (e) {
+            console.error(e);
+            setStatus('Ошибка инициализации WebApp', 'err');
         }
-        
-        // Отправляем данные боту
-        function sendData() {
-            const user = tg.initDataUnsafe.user;
-            const data = {
-                userId: user.id,
-                firstName: user.first_name,
-                message: 'Привет от Web App!'
-            };
-            
-            // Отправляем данные обратно в бот
-            tg.sendData(JSON.stringify(data));
-            
-            // Показываем уведомление
-            tg.showAlert('Данные отправлены! ✅');
-        }
-        
-        // Закрываем приложение
-        function closeApp() {
-            tg.close();
-        }
-        
-        // Инициализируем при загрузке
-        window.addEventListener('load', () => {
-            tg.ready(); // Сообщаем Telegram, что мы готовы
-            displayUserInfo();
+    }
+
+    function isoDateToday() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function switchTab(name) {
+        document.querySelectorAll('.tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === name);
         });
-    </script>
+        document.querySelectorAll('.tab-panel').forEach(p => {
+            p.style.display = p.id === 'tab-' + name ? 'block' : 'none';
+        });
+    }
+
+    async function postJson(path, body) {
+        const res = await fetch(path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        return res.json();
+    }
+
+    async function loadDashboard() {
+        if (!telegramId) return;
+        try {
+            const res = await fetch(`/api/dashboard/${telegramId}`);
+            const json = await res.json();
+
+            if (!json.ok) {
+                setStatus('Ошибка загрузки дашборда', 'err');
+                console.error(json);
+                return;
+            }
+
+            const sleepList = document.getElementById('sleep-list');
+            const weightList = document.getElementById('weight-list');
+            sleepList.innerHTML = '';
+            weightList.innerHTML = '';
+
+            if (json.sleep && json.sleep.length) {
+                json.sleep.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'list-item';
+                    div.innerHTML = `
+                        <span class="list-label">${item.date}</span> – 
+                        ${item.hours_slept} ч, качество ${item.quality_rating ?? '-'}
+                        ${item.notes ? `<div class="small">${item.notes}</div>` : ''}
+                    `;
+                    sleepList.appendChild(div);
+                });
+            } else {
+                sleepList.innerHTML = '<div class="small">Нет данных</div>';
+            }
+
+            if (json.weight && json.weight.length) {
+                json.weight.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'list-item';
+                    div.innerHTML = `
+                        <span class="list-label">${item.date}</span> – 
+                        ${item.weight_kg} кг
+                        ${item.notes ? `<div class="small">${item.notes}</div>` : ''}
+                    `;
+                    weightList.appendChild(div);
+                });
+            } else {
+                weightList.innerHTML = '<div class="small">Нет данных</div>';
+            }
+
+        } catch (e) {
+            console.error(e);
+            setStatus('Ошибка загрузки дашборда', 'err');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        tg.ready();
+        initUser();
+
+        document.getElementById('sleep-date').value = isoDateToday();
+        document.getElementById('weight-date').value = isoDateToday();
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const name = tab.dataset.tab;
+                switchTab(name);
+                if (name === 'dashboard') {
+                    loadDashboard();
+                }
+            });
+        });
+
+        document.getElementById('btn-save-sleep').addEventListener('click', async () => {
+            if (!telegramId) {
+                setStatus('Нет telegramId, перезапусти бота', 'err');
+                return;
+            }
+            const date = document.getElementById('sleep-date').value;
+            const hours = parseFloat(document.getElementById('sleep-hours').value);
+            const quality = parseInt(document.getElementById('sleep-quality').value || '0', 10);
+            const notes = document.getElementById('sleep-notes').value.trim();
+
+            if (!date || isNaN(hours)) {
+                setStatus('Укажи дату и часы сна', 'err');
+                return;
+            }
+
+            setStatus('Сохраняю сон...', '');
+            try {
+                const json = await postJson('/api/sleep', {
+                    telegramId,
+                    date,
+                    hours,
+                    quality: quality || null,
+                    notes
+                });
+                if (json.ok) {
+                    setStatus('Сон сохранён', 'ok');
+                    tg.HapticFeedback?.notificationOccurred('success');
+                } else {
+                    console.error(json);
+                    setStatus('Ошибка сохранения сна', 'err');
+                    tg.HapticFeedback?.notificationOccurred('error');
+                }
+            } catch (e) {
+                console.error(e);
+                setStatus('Ошибка сети при сохранении сна', 'err');
+            }
+        });
+
+        document.getElementById('btn-save-weight').addEventListener('click', async () => {
+            if (!telegramId) {
+                setStatus('Нет telegramId, перезапусти бота', 'err');
+                return;
+            }
+            const date = document.getElementById('weight-date').value;
+            const weight = parseFloat(document.getElementById('weight-value').value);
+            const notes = document.getElementById('weight-notes').value.trim();
+
+            if (!date || isNaN(weight)) {
+                setStatus('Укажи дату и вес', 'err');
+                return;
+            }
+
+            setStatus('Сохраняю вес...', '');
+            try {
+                const json = await postJson('/api/weight', {
+                    telegramId,
+                    date,
+                    weight,
+                    notes
+                });
+                if (json.ok) {
+                    setStatus('Вес сохранён', 'ok');
+                    tg.HapticFeedback?.notificationOccurred('success');
+                } else {
+                    console.error(json);
+                    setStatus('Ошибка сохранения веса', 'err');
+                    tg.HapticFeedback?.notificationOccurred('error');
+                }
+            } catch (e) {
+                console.error(e);
+                setStatus('Ошибка сети при сохранении веса', 'err');
+            }
+        });
+    });
+</script>
 </body>
 </html>
