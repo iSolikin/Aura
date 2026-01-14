@@ -1067,7 +1067,7 @@
     }
 
 
-    async function loadHistory() {
+       async function loadHistory() {
         if (!telegramId) return;
         try {
             const res = await fetch(`/api/dashboard/${telegramId}`);
@@ -1080,21 +1080,27 @@
             sleepList.innerHTML = '';
             weightList.innerHTML = '';
 
-            // Графики
-            if (json.sleep && json.sleep.length > 0) {
+            // ВСЕГДА показываем графики, даже если мало данных
+            if (json.sleep && json.sleep.length >= 1) {
                 const sortedSleep = [...json.sleep].reverse();
                 const sleepDates = sortedSleep.map(s => s.date.slice(5));
                 const sleepHours = sortedSleep.map(s => s.hours_slept);
 
                 renderSleepChart(sleepDates, sleepHours);
+            } else {
+                // Пустой график если нет данных
+                renderSleepChart([], []);
             }
 
-            if (json.weight && json.weight.length > 0) {
+            if (json.weight && json.weight.length >= 1) {
                 const sortedWeight = [...json.weight].reverse();
                 const weightDates = sortedWeight.map(w => w.date.slice(5));
                 const weightValues = sortedWeight.map(w => w.weight_kg);
 
                 renderWeightChart(weightDates, weightValues);
+            } else {
+                // Пустой график если нет данных
+                renderWeightChart([], []);
             }
 
             // История
