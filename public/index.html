@@ -6,7 +6,6 @@
     <title>Aura – трекер сна и веса</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
 
@@ -556,6 +555,23 @@
             animation: pulse 1s ease-in-out;
         }
 
+        .chart-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .chart-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+        }
     </style>
 </head>
 <body>
@@ -730,13 +746,17 @@
                 
                 <!-- ГРАФИКИ -->
                 <div id="charts-container" style="margin-bottom: 20px;">
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-size: 12px; color: #aaa; margin-bottom: 8px; text-transform: uppercase;">🌙 Сон (часы)</div>
-                        <canvas id="sleepChart" style="max-height: 200px;"></canvas>
+                    <div class="chart-wrapper">
+                        <div class="chart-label">🌙 Сон (часы)</div>
+                        <div class="chart-container">
+                            <canvas id="sleepChart"></canvas>
+                        </div>
                     </div>
-                    <div>
-                        <div style="font-size: 12px; color: #aaa; margin-bottom: 8px; text-transform: uppercase;">⚖️ Вес (кг)</div>
-                        <canvas id="weightChart" style="max-height: 200px;"></canvas>
+                    <div class="chart-wrapper">
+                        <div class="chart-label">⚖️ Вес (кг)</div>
+                        <div class="chart-container">
+                            <canvas id="weightChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -800,6 +820,8 @@
 
 
     let telegramId = null;
+    let sleepChartInstance = null;
+    let weightChartInstance = null;
 
 
     function setStatus(msg, type = '') {
@@ -1051,16 +1073,31 @@
             const res = await fetch(`/api/dashboard/${telegramId}`);
             const json = await res.json();
 
-
             if (!json.ok) return;
-
 
             const sleepList = document.getElementById('sleep-list');
             const weightList = document.getElementById('weight-list');
             sleepList.innerHTML = '';
             weightList.innerHTML = '';
 
+            // Графики
+            if (json.sleep && json.sleep.length > 0) {
+                const sortedSleep = [...json.sleep].reverse();
+                const sleepDates = sortedSleep.map(s => s.date.slice(5));
+                const sleepHours = sortedSleep.map(s => s.hours_slept);
 
+                renderSleepChart(sleepDates, sleepHours);
+            }
+
+            if (json.weight && json.weight.length > 0) {
+                const sortedWeight = [...json.weight].reverse();
+                const weightDates = sortedWeight.map(w => w.date.slice(5));
+                const weightValues = sortedWeight.map(w => w.weight_kg);
+
+                renderWeightChart(weightDates, weightValues);
+            }
+
+            // История
             if (json.sleep && json.sleep.length) {
                 json.sleep.forEach(item => {
                     const div = document.createElement('div');
@@ -1079,7 +1116,6 @@
                 sleepList.innerHTML = '<div class="small">Нет данных</div>';
             }
 
-
             if (json.weight && json.weight.length) {
                 json.weight.forEach(item => {
                     const div = document.createElement('div');
@@ -1094,10 +1130,167 @@
                 weightList.innerHTML = '<div class="small">Нет данных</div>';
             }
 
-
         } catch (e) {
             console.error('loadHistory error:', e);
         }
+    }
+
+    function renderSleepChart(dates, hours) {
+        const ctx = document.getElementById('sleepChart');
+        
+        if (sleepChartInstance) {
+            sleepChartInstance.destroy();
+        }
+
+        sleepChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Часы сна',
+                    data: hours,
+                    backgroundColor: [
+                        'rgba(124, 58, 237, 0.8)',
+                        'rgba(124, 58, 237, 0.7)',
+                        'rgba(124, 58, 237, 0.6)',
+                        'rgba(124, 58, 237, 0.7)',
+                        'rgba(124, 58, 237, 0.8)',
+                        'rgba(124, 58, 237, 0.75)',
+                        'rgba(124, 58, 237, 0.85)'
+                    ],
+                    borderColor: '#7c3aed',
+                    borderWidth: 0,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                indexAxis: undefined,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 52, 96, 0.8)',
+                        titleColor: '#7c3aed',
+                        bodyColor: '#e0e0e0',
+                        borderColor: '#7c3aed',
+                        borderWidth: 1,
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        padding: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + ' ч';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 12,
+                        grid: {
+                            color: 'rgba(124, 58, 237, 0.1)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#aaa',
+                            font: { size: 11 },
+                            stepSize: 3
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#aaa',
+                            font: { size: 10 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderWeightChart(dates, weights) {
+        const ctx = document.getElementById('weightChart');
+        
+        if (weightChartInstance) {
+            weightChartInstance.destroy();
+        }
+
+        weightChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Вес (кг)',
+                    data: weights,
+                    borderColor: '#06b6d4',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    borderWidth: 2.5,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#06b6d4',
+                    pointBorderColor: '#0a0e27',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 52, 96, 0.8)',
+                        titleColor: '#06b6d4',
+                        bodyColor: '#e0e0e0',
+                        borderColor: '#06b6d4',
+                        borderWidth: 1,
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        padding: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y.toFixed(1) + ' кг';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: {
+                            color: 'rgba(124, 58, 237, 0.1)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#aaa',
+                            font: { size: 11 }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#aaa',
+                            font: { size: 10 }
+                        }
+                    }
+                }
+            }
+        });
     }
 
 
