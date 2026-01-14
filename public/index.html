@@ -132,7 +132,7 @@
         }
 
         .today-value {
-            font-size: 18px;
+            font-size: 16px;
             color: #7c3aed;
             font-weight: 700;
         }
@@ -365,6 +365,21 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
+        .progress-bar {
+            background: rgba(124, 58, 237, 0.1);
+            border-radius: 8px;
+            height: 8px;
+            margin-top: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(124, 58, 237, 0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7c3aed, #06b6d4);
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -399,7 +414,7 @@
                     <button class="btn-compact" onclick="switchTab('sleep')">🌙 Сон</button>
                     <button class="btn-compact" onclick="switchTab('weight')">⚖️ Вес</button>
                     <button class="btn-compact" onclick="switchTab('history')">📈 История</button>
-                    <button class="btn-compact" onclick="switchTab('stats')">📉 Статистика</button>
+                    <button class="btn-compact" onclick="switchTab('settings')">⚙️ Цели</button>
                 </div>
             </div>
         </div>
@@ -488,14 +503,23 @@
         </div>
     </div>
 
-    <!-- БЛОК СТАТИСТИКИ -->
-    <div class="tab-panel" id="tab-stats" style="display:none;">
+    <!-- БЛОК НАСТРОЕК/ЦЕЛЕЙ -->
+    <div class="tab-panel" id="tab-settings" style="display:none;">
         <div class="card">
             <div class="card-content">
-                <div class="card-title">📉 Статистика</div>
-                <div style="text-align: center; color: #aaa; padding: 20px;">
-                    Скоро здесь появятся графики и аналитика
+                <div class="card-title">⚙️ Цели и настройки</div>
+
+                <div class="field">
+                    <label for="target-weight">Целевой вес (кг)</label>
+                    <input type="number" id="target-weight" min="0" max="300" step="0.1" placeholder="75.0" />
                 </div>
+
+                <div class="field">
+                    <label for="target-sleep">Целевой сон (часов)</label>
+                    <input type="number" id="target-sleep" min="1" max="12" step="0.5" placeholder="8" />
+                </div>
+
+                <button class="btn-primary" id="btn-save-settings">Сохранить цели</button>
             </div>
         </div>
     </div>
@@ -587,18 +611,39 @@
             const today = isoDateToday();
             const todaySleep = json.sleep?.find(s => s.date === today);
             const todayWeight = json.weight?.find(w => w.date === today);
+            const targetWeight = json.user?.target_weight_kg;
+            const targetSleep = json.user?.target_sleep_hours;
 
             const sleepVal = document.getElementById('today-sleep-val');
             const weightVal = document.getElementById('today-weight-val');
 
             if (todaySleep) {
-                sleepVal.textContent = todaySleep.hours_slept + 'ч';
+                let sleepText = `${todaySleep.hours_slept}ч`;
+                if (todaySleep.sleep_start && todaySleep.sleep_end) {
+                    sleepText = `${todaySleep.hours_slept}ч (${todaySleep.sleep_start}–${todaySleep.sleep_end})`;
+                }
+                sleepVal.textContent = sleepText;
                 sleepVal.classList.remove('empty');
             }
 
             if (todayWeight) {
-                weightVal.textContent = todayWeight.weight_kg + 'кг';
+                let weightText = `${todayWeight.weight_kg}кг`;
+                if (targetWeight) {
+                    const diff = (todayWeight.weight_kg - targetWeight).toFixed(1);
+                    const remaining = Math.abs(diff);
+                    const sign = diff > 0 ? '↑' : diff < 0 ? '↓' : '✓';
+                    weightText = `${todayWeight.weight_kg}кг / ${targetWeight}кг ${sign} ${remaining}кг`;
+                }
+                weightVal.textContent = weightText;
                 weightVal.classList.remove('empty');
+            }
+
+            // Проставляем цели в настройки
+            if (targetWeight) {
+                document.getElementById('target-weight').value = targetWeight;
+            }
+            if (targetSleep) {
+                document.getElementById('target-sleep').value = targetSleep;
             }
         } catch (e) {
             console.error('loadTodaySummary error:', e);
@@ -622,9 +667,13 @@
                 json.sleep.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'list-item';
+                    let sleepText = `${item.hours_slept}ч (${item.quality_rating}/10)`;
+                    if (item.sleep_start && item.sleep_end) {
+                        sleepText = `${item.hours_slept}ч (${item.sleep_start}–${item.sleep_end}), ${item.quality_rating}/10`;
+                    }
                     div.innerHTML = `
-                        <span class="list-label">${item.date}</span> – ${item.hours_slept}ч (${item.quality_rating}/10)
-                        ${item.notes ? `<div class="small">${item.notes}</div>` : ''}
+                        <span class="list-label">${item.date}</span> – ${sleepText}
+                        ${item.notes ? `<div class="small">"${item.notes}"</div>` : ''}
                     `;
                     sleepList.appendChild(div);
                 });
@@ -638,7 +687,7 @@
                     div.className = 'list-item';
                     div.innerHTML = `
                         <span class="list-label">${item.date}</span> – ${item.weight_kg}кг
-                        ${item.notes ? `<div class="small">${item.notes}</div>` : ''}
+                        ${item.notes ? `<div class="small">"${item.notes}"</div>` : ''}
                     `;
                     weightList.appendChild(div);
                 });
@@ -774,6 +823,35 @@
                     tg.HapticFeedback?.notificationOccurred('success');
                     document.getElementById('weight-notes').value = '';
                     document.getElementById('weight-value').value = '';
+                } else {
+                    setStatus('Ошибка', 'err');
+                    tg.HapticFeedback?.notificationOccurred('error');
+                }
+            } catch (e) {
+                console.error(e);
+                setStatus('Ошибка сети', 'err');
+            }
+        });
+
+        document.getElementById('btn-save-settings').addEventListener('click', async () => {
+            if (!telegramId) {
+                setStatus('Нет telegramId', 'err');
+                return;
+            }
+            const targetWeight = parseFloat(document.getElementById('target-weight').value) || null;
+            const targetSleep = parseFloat(document.getElementById('target-sleep').value) || null;
+
+            setStatus('Сохраняю цели...', '');
+            try {
+                const json = await postJson('/api/settings', {
+                    telegramId,
+                    targetWeightKg: targetWeight,
+                    targetSleepHours: targetSleep
+                });
+                if (json.ok) {
+                    setStatus('Цели обновлены ✨', 'ok');
+                    loadTodaySummary();
+                    tg.HapticFeedback?.notificationOccurred('success');
                 } else {
                     setStatus('Ошибка', 'err');
                     tg.HapticFeedback?.notificationOccurred('error');

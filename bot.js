@@ -246,6 +246,47 @@ app.post('/api/weight', async (req, res) => {
     }
 });
 
+// Обновление целевого веса
+app.post('/api/settings', async (req, res) => {
+    try {
+        const { telegramId, targetWeightKg, targetSleepHours } = req.body;
+
+        if (!telegramId) {
+            return res.status(400).json({ error: 'telegramId обязателен' });
+        }
+
+        const { data: user, error: userErr } = await supabase
+            .from('users')
+            .select('*')
+            .eq('telegram_id', telegramId)
+            .maybeSingle();
+
+        if (userErr || !user) {
+            return res.status(400).json({ error: 'user not found' });
+        }
+
+        const updateData = {};
+        if (targetWeightKg !== undefined) updateData.target_weight_kg = targetWeightKg;
+        if (targetSleepHours !== undefined) updateData.target_sleep_hours = targetSleepHours;
+
+        const { data, error } = await supabase
+            .from('users')
+            .update(updateData)
+            .eq('id', user.id)
+            .select();
+
+        if (error) {
+            console.error('supabase settings update error:', error);
+            return res.status(500).json({ error: 'db error' });
+        }
+
+        res.json({ ok: true, data });
+    } catch (err) {
+        console.error('/api/settings error:', err);
+        res.status(500).json({ error: 'server error' });
+    }
+});
+
 // Последние 7 дней для дашборда
 app.get('/api/dashboard/:telegramId', async (req, res) => {
     try {
@@ -280,7 +321,15 @@ app.get('/api/dashboard/:telegramId', async (req, res) => {
             return res.status(500).json({ error: 'db error' });
         }
 
-        res.json({ ok: true, sleep, weight });
+        res.json({ 
+            ok: true, 
+            sleep, 
+            weight,
+            user: {
+                target_weight_kg: user.target_weight_kg,
+                target_sleep_hours: user.target_sleep_hours
+            }
+        });
     } catch (err) {
         console.error('/api/dashboard error:', err);
         res.status(500).json({ error: 'server error' });
