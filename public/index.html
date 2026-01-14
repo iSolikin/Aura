@@ -6,17 +6,39 @@
     <title>Aura – трекер сна и веса</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(ellipse at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                        linear-gradient(135deg, #0a0e27 0%, #16213e 50%, #0f3460 100%);
             color: #e0e0e0;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(0,212,255,0.03)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            pointer-events: none;
+            z-index: 0;
         }
 
         .app {
@@ -24,64 +46,124 @@
             margin: 0 auto;
             padding: 12px;
             padding-bottom: 80px;
+            position: relative;
+            z-index: 1;
         }
 
         h1 {
-            font-size: 26px;
-            margin: 16px 0 8px 0;
+            font-size: 32px;
+            margin: 20px 0 8px 0;
             text-align: center;
-            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            background: linear-gradient(135deg, #7c3aed, #06b6d4, #0ea5e9, #7c3aed);
+            background-size: 200% 200%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            animation: gradientShift 6s ease infinite;
             font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 16px;
         }
 
         .tabs {
             display: flex;
             gap: 0;
-            margin-bottom: 12px;
-            border-radius: 10px;
+            margin-bottom: 16px;
+            border-radius: 12px;
             overflow: hidden;
-            background: #16213e;
+            background: rgba(10, 14, 39, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(124, 58, 237, 0.2);
         }
 
         .tab {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             text-align: center;
             border: none;
             background-color: transparent;
             color: #999;
             cursor: pointer;
             font-size: 13px;
-            font-weight: 500;
-            transition: all 0.3s;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #7c3aed, transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
         .tab.active {
-            background: linear-gradient(135deg, #00d4ff, #0099ff);
-            color: #000;
-            font-weight: 600;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(6, 182, 212, 0.1));
+            color: #7c3aed;
+            font-weight: 700;
+        }
+
+        .tab.active::after {
+            opacity: 1;
         }
 
         .card {
-            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
+            background: linear-gradient(135deg, rgba(30, 41, 82, 0.7) 0%, rgba(15, 52, 96, 0.5) 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 14px;
+            box-shadow: 0 8px 32px rgba(124, 58, 237, 0.1),
+                        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.2), transparent);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
         }
 
         .card-title {
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #00d4ff;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: #7c3aed;
             font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .field {
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
 
         .field label {
@@ -89,27 +171,32 @@
             font-size: 12px;
             margin-bottom: 6px;
             color: #aaa;
-            font-weight: 500;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .field input,
         .field textarea,
         .field select {
             width: 100%;
-            padding: 10px 12px;
+            padding: 12px 14px;
             font-size: 14px;
-            border-radius: 8px;
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            background-color: rgba(15, 15, 35, 0.8);
+            border-radius: 10px;
+            border: 1px solid rgba(124, 58, 237, 0.4);
+            background: rgba(10, 14, 39, 0.8);
             color: #e0e0e0;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s;
+            font-family: inherit;
         }
 
         .field input:focus,
         .field textarea:focus {
-            border-color: #00d4ff;
-            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+            border-color: #7c3aed;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.3),
+                        inset 0 0 10px rgba(124, 58, 237, 0.1);
+            background: rgba(10, 14, 39, 0.95);
         }
 
         .field textarea {
@@ -119,30 +206,68 @@
 
         .btn-primary {
             width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #00d4ff, #0099ff);
-            color: #000;
+            padding: 14px;
+            background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+            color: #fff;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4);
         }
 
         .btn-primary:active {
-            transform: scale(0.98);
-            opacity: 0.9;
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.2);
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
         }
 
         .status {
             font-size: 13px;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             color: #aaa;
-            padding: 10px 12px;
-            border-radius: 8px;
-            background: rgba(0, 212, 255, 0.1);
-            border-left: 3px solid #00d4ff;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: rgba(124, 58, 237, 0.1);
+            border-left: 3px solid #7c3aed;
+            backdrop-filter: blur(10px);
+            animation: slideInDown 0.3s ease;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .status.ok {
@@ -152,14 +277,14 @@
         }
 
         .status.err {
-            color: #ff4444;
-            border-left-color: #ff4444;
-            background: rgba(255, 68, 68, 0.1);
+            color: #ff6b6b;
+            border-left-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
         }
 
         .list-item {
             padding: 10px 0;
-            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+            border-bottom: 1px solid rgba(124, 58, 237, 0.15);
             font-size: 13px;
         }
 
@@ -168,13 +293,13 @@
         }
 
         .list-label {
-            font-weight: 600;
-            color: #00d4ff;
+            font-weight: 700;
+            color: #06b6d4;
         }
 
         .small {
             font-size: 12px;
-            color: #777;
+            color: #888;
             margin-top: 4px;
         }
 
@@ -183,11 +308,12 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(180deg, rgba(15, 15, 35, 0.8) 0%, rgba(15, 15, 35, 1) 100%);
-            border-top: 1px solid rgba(0, 212, 255, 0.2);
+            background: linear-gradient(180deg, rgba(10, 14, 39, 0) 0%, rgba(10, 14, 39, 0.95) 50%, rgba(10, 14, 39, 1) 100%);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(124, 58, 237, 0.2);
             display: flex;
             justify-content: space-around;
-            padding: 8px 0;
+            padding: 12px 0 16px 0;
             max-width: 520px;
             margin: 0 auto;
         }
@@ -197,40 +323,60 @@
             padding: 8px;
             text-align: center;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             color: #777;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            border-radius: 8px;
+            margin: 0 4px;
         }
 
         .nav-item.active {
-            color: #00d4ff;
+            color: #7c3aed;
+            background: rgba(124, 58, 237, 0.1);
+            font-weight: 700;
         }
 
         .calc-result {
-            background: rgba(0, 212, 255, 0.1);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(0, 212, 255, 0.3);
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+            border: 1px solid rgba(124, 58, 237, 0.3);
             text-align: center;
         }
 
         .calc-result-value {
-            font-size: 20px;
-            color: #00d4ff;
+            font-size: 24px;
+            color: #7c3aed;
             font-weight: 700;
+            margin: 6px 0;
         }
 
         .calc-result-label {
             font-size: 12px;
             color: #aaa;
-            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
         }
     </style>
 </head>
 <body>
 <div class="app">
-    <h1>🌙 Aura</h1>
+    <h1>✨ Aura</h1>
+    <div class="subtitle">Трекер сна и веса</div>
 
     <!-- СТАТУС -->
     <div class="status" id="status">Инициализация...</div>
@@ -238,89 +384,102 @@
     <!-- БЛОК ГЛАВНОЙ -->
     <div class="tab-panel" id="tab-home">
         <div class="card">
-            <div class="card-title">📊 Сегодня</div>
-            <div id="today-sleep" class="list-item">Сон: нет данных</div>
-            <div id="today-weight" class="list-item">Вес: нет данных</div>
+            <div class="card-content">
+                <div class="card-title">🌙 Сегодня</div>
+                <div id="today-sleep" class="list-item">Сон: нет данных</div>
+                <div id="today-weight" class="list-item">Вес: нет данных</div>
+            </div>
         </div>
 
         <div class="card">
-            <div class="card-title">⚡ Быстрые действия</div>
-            <button class="btn-primary" onclick="switchTab('sleep')" style="margin-bottom: 8px;">🌙 Записать сон</button>
-            <button class="btn-primary" onclick="switchTab('weight')">⚖️ Записать вес</button>
+            <div class="card-content">
+                <div class="card-title">⚡ Начни трекинг</div>
+                <button class="btn-primary" onclick="switchTab('sleep')" style="margin-bottom: 10px;">🌙 Записать сон</button>
+                <button class="btn-primary" onclick="switchTab('weight')" style="margin-bottom: 10px;">⚖️ Записать вес</button>
+                <button class="btn-primary" onclick="switchTab('history')">📈 История</button>
+            </div>
         </div>
     </div>
 
     <!-- БЛОК СНА -->
     <div class="tab-panel" id="tab-sleep" style="display:none;">
         <div class="card">
-            <div class="card-title">🌙 Трекер сна</div>
+            <div class="card-content">
+                <div class="card-title">🌙 Трекер сна</div>
 
-            <div class="field">
-                <label for="sleep-date">Дата</label>
-                <input type="date" id="sleep-date" />
-            </div>
-
-            <div class="field">
-                <label for="sleep-start">Время засыпания</label>
-                <input type="time" id="sleep-start" />
-            </div>
-
-            <div class="field">
-                <label for="sleep-end">Время пробуждения</label>
-                <input type="time" id="sleep-end" />
-            </div>
-
-            <div id="sleep-calc" style="display:none;">
-                <div class="calc-result">
-                    <div class="calc-result-label">Спал</div>
-                    <div class="calc-result-value" id="sleep-hours-calc">—</div>
-                    <div class="calc-result-label">Качество</div>
-                    <div class="calc-result-value" id="sleep-quality-calc">—</div>
+                <div class="field">
+                    <label for="sleep-date">Дата</label>
+                    <input type="date" id="sleep-date" />
                 </div>
-            </div>
 
-            <div class="field">
-                <label for="sleep-notes">Заметки (опционально)</label>
-                <textarea id="sleep-notes" placeholder="Как почувствовал себя, возможные проблемы со сном..."></textarea>
-            </div>
+                <div class="field">
+                    <label for="sleep-start">⏰ Время засыпания</label>
+                    <input type="time" id="sleep-start" />
+                </div>
 
-            <button class="btn-primary" id="btn-save-sleep">Сохранить сон</button>
+                <div class="field">
+                    <label for="sleep-end">⏰ Время пробуждения</label>
+                    <input type="time" id="sleep-end" />
+                </div>
+
+                <div id="sleep-calc" style="display:none;">
+                    <div class="calc-result">
+                        <div class="calc-result-label">Продолжительность</div>
+                        <div class="calc-result-value" id="sleep-hours-calc">—</div>
+                        <div class="calc-result-label" style="margin-top: 10px;">Качество сна</div>
+                        <div class="calc-result-value" id="sleep-quality-calc">—</div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="sleep-notes">📝 Заметки (опционально)</label>
+                    <textarea id="sleep-notes" placeholder="Как почувствовал себя, возможные причины плохого сна..."></textarea>
+                </div>
+
+                <button class="btn-primary" id="btn-save-sleep">Сохранить сон</button>
+            </div>
         </div>
     </div>
 
     <!-- БЛОК ВЕСА -->
     <div class="tab-panel" id="tab-weight" style="display:none;">
         <div class="card">
-            <div class="card-title">⚖️ Трекер веса</div>
+            <div class="card-content">
+                <div class="card-title">⚖️ Трекер веса</div>
 
-            <div class="field">
-                <label for="weight-date">Дата</label>
-                <input type="date" id="weight-date" />
+                <div class="field">
+                    <label for="weight-date">Дата</label>
+                    <input type="date" id="weight-date" />
+                </div>
+
+                <div class="field">
+                    <label for="weight-value">⚖️ Вес (кг)</label>
+                    <input type="number" id="weight-value" min="0" max="300" step="0.1" placeholder="Например, 72.4" />
+                </div>
+
+                <div class="field">
+                    <label for="weight-notes">📝 Заметки (опционально)</label>
+                    <textarea id="weight-notes" placeholder="Комментарии о тренировке, питании..."></textarea>
+                </div>
+
+                <button class="btn-primary" id="btn-save-weight">Сохранить вес</button>
             </div>
-
-            <div class="field">
-                <label for="weight-value">Вес (кг)</label>
-                <input type="number" id="weight-value" min="0" max="300" step="0.1" placeholder="Например, 72.4" />
-            </div>
-
-            <div class="field">
-                <label for="weight-notes">Заметки (опционально)</label>
-                <textarea id="weight-notes" placeholder="Комментарии..."></textarea>
-            </div>
-
-            <button class="btn-primary" id="btn-save-weight">Сохранить вес</button>
         </div>
     </div>
 
     <!-- БЛОК ИСТОРИИ -->
     <div class="tab-panel" id="tab-history" style="display:none;">
         <div class="card">
-            <div class="card-title">📈 История последних 7 дней</div>
-            <div class="small">Сон:</div>
-            <div id="sleep-list"></div>
-            <div style="margin-top: 12px;">
-                <div class="small">Вес:</div>
-                <div id="weight-list"></div>
+            <div class="card-content">
+                <div class="card-title">📈 История (7 дней)</div>
+                <div style="margin-bottom: 14px;">
+                    <div class="small" style="margin-bottom: 8px;">🌙 СОН:</div>
+                    <div id="sleep-list"></div>
+                </div>
+                <div>
+                    <div class="small" style="margin-bottom: 8px;">⚖️ ВЕС:</div>
+                    <div id="weight-list"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -329,10 +488,10 @@
 
 <!-- НИЖНЯЯ НАВИГАЦИЯ -->
 <div class="nav-bottom">
-    <div class="nav-item active" data-tab="home" onclick="navClick(this)">🏠 Главная</div>
-    <div class="nav-item" data-tab="sleep" onclick="navClick(this)">🌙 Сон</div>
-    <div class="nav-item" data-tab="weight" onclick="navClick(this)">⚖️ Вес</div>
-    <div class="nav-item" data-tab="history" onclick="navClick(this)">📈 История</div>
+    <div class="nav-item active" data-tab="home" onclick="navClick(this)">🏠</div>
+    <div class="nav-item" data-tab="sleep" onclick="navClick(this)">🌙</div>
+    <div class="nav-item" data-tab="weight" onclick="navClick(this)">⚖️</div>
+    <div class="nav-item" data-tab="history" onclick="navClick(this)">📈</div>
 </div>
 
 <script>
@@ -355,7 +514,7 @@
                 return;
             }
             telegramId = user.id;
-            setStatus('Добро пожаловать, ' + (user.first_name || 'друже') + '! 👋', 'ok');
+            setStatus('Добро пожаловать в Aura, ' + (user.first_name || 'друже') + '! ✨', 'ok');
         } catch (e) {
             console.error(e);
             setStatus('Ошибка инициализации', 'err');
@@ -408,11 +567,11 @@
             const weightDiv = document.getElementById('today-weight');
 
             if (todaySleep) {
-                sleepDiv.innerHTML = `<span class="list-label">🌙 Сон:</span> ${todaySleep.hours_slept} ч, качество ${todaySleep.quality_rating}/10`;
+                sleepDiv.innerHTML = `<span class="list-label">🌙 Спал:</span> ${todaySleep.hours_slept}ч, качество ${todaySleep.quality_rating}/10`;
             }
 
             if (todayWeight) {
-                weightDiv.innerHTML = `<span class="list-label">⚖️ Вес:</span> ${todayWeight.weight_kg} кг`;
+                weightDiv.innerHTML = `<span class="list-label">⚖️ Вес:</span> ${todayWeight.weight_kg}кг`;
             }
         } catch (e) {
             console.error('loadTodaySummary error:', e);
@@ -437,9 +596,8 @@
                     const div = document.createElement('div');
                     div.className = 'list-item';
                     div.innerHTML = `
-                        <span class="list-label">${item.date}</span> – 
-                        ${item.hours_slept} ч, качество ${item.quality_rating}/10
-                        ${item.notes ? `<div class="small">${item.notes}</div>` : ''}
+                        <span class="list-label">${item.date}</span> – ${item.hours_slept}ч, качество ${item.quality_rating}/10
+                        ${item.notes ? `<div class="small">"${item.notes}"</div>` : ''}
                     `;
                     sleepList.appendChild(div);
                 });
@@ -452,9 +610,8 @@
                     const div = document.createElement('div');
                     div.className = 'list-item';
                     div.innerHTML = `
-                        <span class="list-label">${item.date}</span> – 
-                        ${item.weight_kg} кг
-                        ${item.notes ? `<div class="small">${item.notes}</div>` : ''}
+                        <span class="list-label">${item.date}</span> – ${item.weight_kg}кг
+                        ${item.notes ? `<div class="small">"${item.notes}"</div>` : ''}
                     `;
                     weightList.appendChild(div);
                 });
@@ -467,7 +624,6 @@
         }
     }
 
-    // Расчет сна при вводе времён
     function calcSleep() {
         const start = document.getElementById('sleep-start').value;
         const end = document.getElementById('sleep-end').value;
@@ -489,7 +645,6 @@
 
         const hours = parseFloat(((endMinutes - startMinutes) / 60).toFixed(1));
 
-        // Рассчитываем качество (копируем логику из бота)
         let quality = 5;
         if (hours >= 7 && hours <= 9) {
             quality = 8;
@@ -547,7 +702,7 @@
                     notes
                 });
                 if (json.ok) {
-                    setStatus(`Сон сохранён! ${json.calculated.hours}ч, качество ${json.calculated.quality}/10 ✅`, 'ok');
+                    setStatus(`✨ Спал ${json.calculated.hours}ч, качество ${json.calculated.quality}/10`, 'ok');
                     loadTodaySummary();
                     tg.HapticFeedback?.notificationOccurred('success');
                 } else {
@@ -583,7 +738,7 @@
                     notes
                 });
                 if (json.ok) {
-                    setStatus(`Вес сохранён ${weight} кг ✅`, 'ok');
+                    setStatus(`✨ Вес ${weight}кг записан`, 'ok');
                     loadTodaySummary();
                     tg.HapticFeedback?.notificationOccurred('success');
                 } else {
