@@ -59,6 +59,32 @@ function calculateSleepQuality(hours, sleepStart, sleepEnd) {
     return Math.max(1, Math.min(10, quality));
 }
 
+// Расчет streak (дни подряд)
+function calculateStreak(logs) {
+    if (!logs || logs.length === 0) return 0;
+    
+    const sortedLogs = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date));
+    let streak = 0;
+    let currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+
+    for (const log of sortedLogs) {
+        const logDate = new Date(log.date);
+        logDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.floor((currentDate - logDate) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === streak) {
+        streak++;
+        } else {
+        break;
+        }
+    }
+
+    return streak;
+    }
+
+
+
 // ------------ Telegraf бот ------------
 const bot = new Telegraf(BOT_TOKEN);
 
@@ -339,6 +365,42 @@ app.get('/api/dashboard/:telegramId', async (req, res) => {
 // ------------ Запуск ------------
 
 const PORT = process.env.PORT || 3000;
+
+// Получить streak счётчик
+app.get('/api/streak/:telegramId', async (req, res) => {
+  try {
+    const telegramId = req.params.telegramId;
+    const { data: user, error: userErr } = await supabase
+      .from('users')
+      .select('*')
+      .eq('telegram_id', telegramId)
+      .maybeSingle();
+
+    if (userErr || !user) {
+      return res.status(400).json({ error: 'user not found' });
+    }
+
+    const { data: sleepLogs, error: sleepErr } = await supabase
+      .from('sleep_logs')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('date', { ascending: false });
+
+    if (sleepErr) {
+      return res.status(500).json({ error: 'db error' });
+    }
+
+    const streak = calculateStreak(sleepLogs || []);
+
+    res.json({
+      ok: true,
+      streak
+    });
+  } catch (err) {
+    console.error('/api/streak error:', err);
+    res.status(500).json({ error: 'server error' });
+  }
+});
 
 app.listen(PORT, () => {
     console.log(`🌐 Express сервер запущен на порту ${PORT}`);

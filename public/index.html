@@ -8,15 +8,18 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
 
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+
         html {
             scroll-behavior: smooth;
         }
+
 
         body {
             font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -28,6 +31,7 @@
             position: relative;
             overflow-x: hidden;
         }
+
 
         body::before {
             content: '';
@@ -41,6 +45,7 @@
             z-index: 0;
         }
 
+
         .app {
             max-width: 520px;
             margin: 0 auto;
@@ -50,6 +55,7 @@
             z-index: 1;
             
         }
+
 
         h1 {
             font-size: 32px;
@@ -64,11 +70,19 @@
             letter-spacing: -1px;
         }
 
+
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
 
         .card {
             background: linear-gradient(135deg, rgba(30, 41, 82, 0.7) 0%, rgba(15, 52, 96, 0.5) 100%);
@@ -83,6 +97,7 @@
             overflow: hidden;
         }
 
+
         .card::before {
             content: '';
             position: absolute;
@@ -95,10 +110,12 @@
             pointer-events: none;
         }
 
+
         .card-content {
             position: relative;
             z-index: 1;
         }
+
 
         .card-title {
             font-weight: 700;
@@ -109,12 +126,14 @@
             letter-spacing: 0.5px;
         }
 
+
         .today-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-bottom: 12px;
         }
+
 
         .today-item {
             background: rgba(124, 58, 237, 0.1);
@@ -124,6 +143,7 @@
             text-align: center;
         }
 
+
         .today-label {
             font-size: 11px;
             color: #aaa;
@@ -132,22 +152,26 @@
             margin-bottom: 6px;
         }
 
+
         .today-value {
             font-size: 16px;
             color: #7c3aed;
             font-weight: 700;
         }
 
+
         .today-value.empty {
             color: #666;
             font-size: 14px;
         }
+
 
         .actions-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
         }
+
 
         .btn-compact {
             padding: 10px 12px;
@@ -162,18 +186,22 @@
             text-align: center;
         }
 
+
         .btn-compact:hover {
             background: linear-gradient(135deg, rgba(124, 58, 237, 0.5), rgba(6, 182, 212, 0.4));
             border-color: #7c3aed;
         }
 
+
         .btn-compact:active {
             transform: scale(0.98);
         }
 
+
         .field {
             margin-bottom: 14px;
         }
+
 
         .field label {
             display: block;
@@ -184,6 +212,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
 
         .field input,
         .field textarea,
@@ -200,6 +229,7 @@
             font-family: inherit;
         }
 
+
         .field input:focus,
         .field textarea:focus {
             border-color: #7c3aed;
@@ -208,10 +238,12 @@
             background: rgba(10, 14, 39, 0.95);
         }
 
+
         .field textarea {
             resize: vertical;
             min-height: 70px;
         }
+
 
         .btn-primary {
             width: 100%;
@@ -231,6 +263,7 @@
             letter-spacing: 0.5px;
         }
 
+
         .btn-primary::before {
             content: '';
             position: absolute;
@@ -242,19 +275,23 @@
             transition: left 0.5s;
         }
 
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4);
         }
+
 
         .btn-primary:active {
             transform: translateY(0);
             box-shadow: 0 4px 15px rgba(124, 58, 237, 0.2);
         }
 
+
         .btn-primary:hover::before {
             left: 100%;
         }
+
 
         .status {
             position: absolute;
@@ -272,12 +309,14 @@
             animation: slideInDown 0.3s ease;
         }
 
+
         .status.hide-status {
             opacity: 0;
             transform: translateY(-10px);
             pointer-events: none;
             transition: opacity 0.4s ease, transform 0.4s ease;
         }
+
 
 
         @keyframes slideInDown {
@@ -291,11 +330,13 @@
             }
         }
 
+
         .status.ok {
             color: #4ade80;
             border-left-color: #4ade80;
             background: rgba(74, 222, 128, 0.1);
         }
+
 
         .status.err {
             color: #ff6b6b;
@@ -303,26 +344,31 @@
             background: rgba(255, 107, 107, 0.1);
         }
 
+
         .list-item {
             padding: 10px 0;
             border-bottom: 1px solid rgba(124, 58, 237, 0.15);
             font-size: 13px;
         }
 
+
         .list-item:last-child {
             border-bottom: none;
         }
+
 
         .list-label {
             font-weight: 700;
             color: #06b6d4;
         }
 
+
         .small {
             font-size: 12px;
             color: #888;
             margin-top: 4px;
         }
+
 
         .nav-bottom {
             position: fixed;
@@ -340,6 +386,7 @@
             z-index: 50;
         }
 
+
         .nav-item {
             flex: 1;
             padding: 8px;
@@ -352,10 +399,12 @@
             margin: 0 4px;
         }
 
+
         .nav-item.active {
             color: #7c3aed;
             background: rgba(124, 58, 237, 0.1);
         }
+
 
         .calc-result {
             background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
@@ -366,12 +415,14 @@
             text-align: center;
         }
 
+
         .calc-result-value {
             font-size: 22px;
             color: #7c3aed;
             font-weight: 700;
             margin: 6px 0;
         }
+
 
         .calc-result-label {
             font-size: 11px;
@@ -380,12 +431,14 @@
             letter-spacing: 0.5px;
         }
 
+
         .goal-card {
             background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(6, 182, 212, 0.05) 100%);
             border: 1px solid rgba(124, 58, 237, 0.2);
             border-radius: 12px;
             padding: 12px;
         }
+
 
         .goal-header {
             display: flex;
@@ -394,11 +447,13 @@
             margin-bottom: 10px;
         }
 
+
         .goal-label {
             font-size: 13px;
             font-weight: 700;
             color: #7c3aed;
         }
+
 
         .goal-percent {
             font-size: 12px;
@@ -406,9 +461,11 @@
             color: #06b6d4;
         }
 
+
         .goal-progress {
             margin-bottom: 8px;
         }
+
 
         .goal-progress-bar {
             width: 100%;
@@ -419,6 +476,7 @@
             border: 1px solid rgba(124, 58, 237, 0.15);
         }
 
+
         .goal-progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #7c3aed, #06b6d4);
@@ -427,6 +485,7 @@
             box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
         }
 
+
         .goal-text {
             font-size: 11px;
             color: #aaa;
@@ -434,11 +493,13 @@
             letter-spacing: 0.5px;
         }
 
+
         .header-wrap {
             position: relative;
-            height: 56px; /* фиксированная высота под приветствие/логотип */
+            height: 56px;
             margin-bottom: 8px;
         }
+
 
         #aura-title {
             font-size: 32px;
@@ -455,22 +516,49 @@
             transition: opacity 0.4s ease, transform 0.4s ease;
         }
 
-        /* активное состояние – логотип на месте */
+
         #aura-title.title-visible {
             opacity: 1;
             transform: translateY(0);
         }
 
+        .streak-card {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(255,107,107,0.1) 0%, rgba(255,165,0,0.1) 100%);
+            border: 2px solid rgba(255,107,107,0.3);
+            border-radius: 16px;
+            margin-bottom: 14px;
+        }
 
+        .streak-emoji {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
 
+        .streak-number {
+            color: #ff6b6b;
+            font-size: 28px;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        .streak-text {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .streak-number.active {
+            animation: pulse 1s ease-in-out;
+        }
     </style>
 </head>
 <body>
 <div class="app">
     <div class="header-wrap">
         <h1 id="aura-title">✨ Aura</h1>
-
-        <!-- СТАТУС -->
         <div class="status" id="status">Загружаю...</div>
     </div>
 
@@ -494,6 +582,12 @@
             </div>
         </div>
 
+        <div class="streak-card" id="streak-card">
+            <div class="streak-emoji">🔥</div>
+            <div class="streak-number" id="streak-counter">0</div>
+            <div class="streak-text">дней подряд</div>
+        </div>
+
         <div class="card">
             <div class="card-content">
                 <div class="card-title">🎯 Цели</div>
@@ -512,7 +606,6 @@
                             <span id="sleep-goal-text">—</span>
                         </div>
                     </div>
-
                     <div id="weight-goal-card" class="goal-card" style="display: none; margin-top: 12px;">
                         <div class="goal-header">
                             <span class="goal-label">⚖️ Вес</span>
@@ -547,26 +640,31 @@
         </div>
     </div>
 
+
     <!-- БЛОК СНА -->
     <div class="tab-panel" id="tab-sleep" style="display:none;">
         <div class="card">
             <div class="card-content">
                 <div class="card-title">🌙 Трекер сна</div>
 
+
                 <div class="field">
                     <label for="sleep-date">Дата</label>
                     <input type="date" id="sleep-date" />
                 </div>
+
 
                 <div class="field">
                     <label for="sleep-start">⏰ Время засыпания</label>
                     <input type="time" id="sleep-start" />
                 </div>
 
+
                 <div class="field">
                     <label for="sleep-end">⏰ Время пробуждения</label>
                     <input type="time" id="sleep-end" />
                 </div>
+
 
                 <div id="sleep-calc" style="display:none;">
                     <div class="calc-result">
@@ -577,15 +675,18 @@
                     </div>
                 </div>
 
+
                 <div class="field">
                     <label for="sleep-notes">Заметки</label>
                     <textarea id="sleep-notes" placeholder="Как спал..."></textarea>
                 </div>
 
+
                 <button class="btn-primary" id="btn-save-sleep">Сохранить</button>
             </div>
         </div>
     </div>
+
 
     <!-- БЛОК ВЕСА -->
     <div class="tab-panel" id="tab-weight" style="display:none;">
@@ -593,25 +694,30 @@
             <div class="card-content">
                 <div class="card-title">⚖️ Трекер веса</div>
 
+
                 <div class="field">
                     <label for="weight-date">Дата</label>
                     <input type="date" id="weight-date" />
                 </div>
+
 
                 <div class="field">
                     <label for="weight-value">Вес (кг)</label>
                     <input type="number" id="weight-value" min="0" max="300" step="0.1" placeholder="72.4" />
                 </div>
 
+
                 <div class="field">
                     <label for="weight-notes">Заметки</label>
                     <textarea id="weight-notes" placeholder="Комментарий..."></textarea>
                 </div>
 
+
                 <button class="btn-primary" id="btn-save-weight">Сохранить</button>
             </div>
         </div>
     </div>
+
 
     <!-- БЛОК ИСТОРИИ -->
     <div class="tab-panel" id="tab-history" style="display:none;">
@@ -630,28 +736,34 @@
         </div>
     </div>
 
+
     <!-- БЛОК НАСТРОЕК/ЦЕЛЕЙ -->
     <div class="tab-panel" id="tab-settings" style="display:none;">
         <div class="card">
             <div class="card-content">
                 <div class="card-title">⚙️ Цели и настройки</div>
 
+
                 <div class="field">
                     <label for="target-weight">Целевой вес (кг)</label>
                     <input type="number" id="target-weight" min="0" max="300" step="0.1" placeholder="75.0" />
                 </div>
+
 
                 <div class="field">
                     <label for="target-sleep">Целевой сон (часов)</label>
                     <input type="number" id="target-sleep" min="1" max="12" step="0.5" placeholder="8" />
                 </div>
 
+
                 <button class="btn-primary" id="btn-save-settings">Сохранить цели</button>
             </div>
         </div>
     </div>
 
+
 </div>
+
 
 <!-- НИЖНЯЯ НАВИГАЦИЯ -->
 <div class="nav-bottom">
@@ -662,11 +774,14 @@
     <div class="nav-item" data-tab="settings" onclick="navClick(this)">⚙️</div>
 </div>
 
+
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
+
     let telegramId = null;
+
 
     function setStatus(msg, type = '') {
         const el = document.getElementById('status');
@@ -674,20 +789,23 @@
         el.className = 'status ' + (type || '');
     }
 
+
         function showGreeting(text) {
             const status = document.getElementById('status');
             const title = document.getElementById('aura-title');
+
 
             status.textContent = text;
             status.className = 'status ok';
             title.classList.remove('title-visible');
 
-            // показать приветствие, потом скрыть и показать Aura
+
             setTimeout(() => {
                 status.classList.add('hide-status');
                 title.classList.add('title-visible');
             }, 2500);
         }
+
 
 
     function initUser() {
@@ -699,6 +817,7 @@
             }
             telegramId = user.id;
 
+
             const name = user.first_name || 'друже';
             const hour = new Date().getHours();
             let greet;
@@ -707,7 +826,9 @@
             else if (hour >= 18 && hour < 23) greet = 'Добрый вечер';
             else greet = 'Доброй ночи';
 
+
             showGreeting(`${greet}, ${name}! ✨`);
+
 
             loadTodaySummary();
         } catch (e) {
@@ -715,6 +836,7 @@
             setStatus('Ошибка инициализации', 'err');
         }
     }
+
 
 
 
@@ -726,26 +848,31 @@
         return `${year}-${month}-${day}`;
     }
 
+
     function switchTab(name) {
         document.querySelectorAll('.tab-panel').forEach(p => {
             p.style.display = 'none';
         });
         document.getElementById('tab-' + name).style.display = 'block';
 
+
         document.querySelectorAll('.nav-item').forEach(n => {
             n.classList.remove('active');
         });
         document.querySelector(`[data-tab="${name}"]`).classList.add('active');
+
 
         if (name === 'history') {
             loadHistory();
         }
     }
 
+
     function navClick(el) {
         const tabName = el.getAttribute('data-tab');
         switchTab(tabName);
     }
+
 
     async function postJson(path, body) {
         const res = await fetch(path, {
@@ -756,19 +883,46 @@
         return res.json();
     }
 
+
+    async function loadStreak() {
+        if (!telegramId) return;
+        try {
+            const res = await fetch(`/api/streak/${telegramId}`);
+            const data = await res.json();
+            
+            if (data.ok) {
+                const streakEl = document.getElementById('streak-counter');
+                streakEl.textContent = data.streak;
+                
+                if (data.streak > 0) {
+                    streakEl.classList.add('active');
+                    setTimeout(() => {
+                        streakEl.classList.remove('active');
+                    }, 1000);
+                }
+            }
+        } catch (err) {
+            console.error('loadStreak error:', err);
+        }
+    }
+
+
     async function loadTodaySummary() {
         if (!telegramId) return;
         try {
             const res = await fetch(`/api/dashboard/${telegramId}`);
             const json = await res.json();
 
+
             if (!json.ok) return;
+
 
             const today = isoDateToday();
             const todaySleep = json.sleep?.find(s => s.date === today);
             const todayWeight = json.weight?.find(w => w.date === today);
             const targetWeight = json.user?.target_weight_kg;
             const targetSleep = json.user?.target_sleep_hours;
+
 
             const sleepVal = document.getElementById('today-sleep-val');
             const weightVal = document.getElementById('today-weight-val');
@@ -779,6 +933,7 @@
             const sleepGoalCard = document.getElementById('sleep-goal-card');
             const weightGoalCard = document.getElementById('weight-goal-card');
 
+
             // Отображение сегодня
             if (todaySleep) {
                 const hours = todaySleep.hours_slept;
@@ -787,14 +942,17 @@
             }
 
 
+
             if (todayWeight) {
                 let weightText = `${todayWeight.weight_kg}кг`;
                 weightVal.textContent = weightText;
                 weightVal.classList.remove('empty');
             }
 
+
             // Цели
             let hasGoals = false;
+
 
             if (targetSleep) {
                 hasGoals = true;
@@ -814,6 +972,7 @@
             } else {
                 sleepGoalCard.style.display = 'none';
             }
+
 
             if (targetWeight) {
                 hasGoals = true;
@@ -841,6 +1000,7 @@
                 weightGoalCard.style.display = 'none';
             }
 
+
             if (hasGoals) {
                 goalsContainer.style.display = 'block';
                 noGoals.style.display = 'none';
@@ -849,6 +1009,7 @@
                 noGoals.style.display = 'block';
             }
 
+
             // Проставляем цели в настройки
             if (targetWeight) {
                 document.getElementById('target-weight').value = targetWeight;
@@ -856,10 +1017,14 @@
             if (targetSleep) {
                 document.getElementById('target-sleep').value = targetSleep;
             }
+
+            // Загрузить streak
+            loadStreak();
         } catch (e) {
             console.error('loadTodaySummary error:', e);
         }
     }
+
 
     async function loadHistory() {
         if (!telegramId) return;
@@ -867,12 +1032,15 @@
             const res = await fetch(`/api/dashboard/${telegramId}`);
             const json = await res.json();
 
+
             if (!json.ok) return;
+
 
             const sleepList = document.getElementById('sleep-list');
             const weightList = document.getElementById('weight-list');
             sleepList.innerHTML = '';
             weightList.innerHTML = '';
+
 
             if (json.sleep && json.sleep.length) {
                 json.sleep.forEach(item => {
@@ -892,6 +1060,7 @@
                 sleepList.innerHTML = '<div class="small">Нет данных</div>';
             }
 
+
             if (json.weight && json.weight.length) {
                 json.weight.forEach(item => {
                     const div = document.createElement('div');
@@ -906,31 +1075,39 @@
                 weightList.innerHTML = '<div class="small">Нет данных</div>';
             }
 
+
         } catch (e) {
             console.error('loadHistory error:', e);
         }
     }
 
+
     function calcSleep() {
         const start = document.getElementById('sleep-start').value;
         const end = document.getElementById('sleep-end').value;
+
 
         if (!start || !end) {
             document.getElementById('sleep-calc').style.display = 'none';
             return;
         }
 
+
         const [startH, startM] = start.split(':').map(Number);
         const [endH, endM] = end.split(':').map(Number);
 
+
         let startMinutes = startH * 60 + startM;
         let endMinutes = endH * 60 + endM;
+
 
         if (endMinutes <= startMinutes) {
             endMinutes += 24 * 60;
         }
 
+
         const hours = parseFloat(((endMinutes - startMinutes) / 60).toFixed(1));
+
 
         let quality = 5;
         if (hours >= 7 && hours <= 9) {
@@ -943,26 +1120,33 @@
             quality = 3;
         }
 
+
         if (startH >= 1 && startH < 6) {
             quality = Math.max(1, quality - 2);
         }
 
+
         quality = Math.max(1, Math.min(10, quality));
+
 
         document.getElementById('sleep-hours-calc').textContent = hours + 'ч';
         document.getElementById('sleep-quality-calc').textContent = quality + '/10';
         document.getElementById('sleep-calc').style.display = 'block';
     }
 
+
     document.addEventListener('DOMContentLoaded', () => {
         tg.ready();
         initUser();
 
+
         document.getElementById('sleep-date').value = isoDateToday();
         document.getElementById('weight-date').value = isoDateToday();
 
+
         document.getElementById('sleep-start').addEventListener('change', calcSleep);
         document.getElementById('sleep-end').addEventListener('change', calcSleep);
+
 
         document.getElementById('btn-save-sleep').addEventListener('click', async () => {
             if (!telegramId) {
@@ -974,10 +1158,12 @@
             const sleepEnd = document.getElementById('sleep-end').value;
             const notes = document.getElementById('sleep-notes').value.trim();
 
+
             if (!date || !sleepStart || !sleepEnd) {
                 setStatus('Укажи все поля', 'err');
                 return;
             }
+
 
             setStatus('Сохраняю...', '');
             try {
@@ -1006,6 +1192,7 @@
             }
         });
 
+
         document.getElementById('btn-save-weight').addEventListener('click', async () => {
             if (!telegramId) {
                 setStatus('Нет telegramId', 'err');
@@ -1015,10 +1202,12 @@
             const weight = parseFloat(document.getElementById('weight-value').value);
             const notes = document.getElementById('weight-notes').value.trim();
 
+
             if (!date || isNaN(weight)) {
                 setStatus('Укажи дату и вес', 'err');
                 return;
             }
+
 
             setStatus('Сохраняю...', '');
             try {
@@ -1044,6 +1233,7 @@
             }
         });
 
+
         document.getElementById('btn-save-settings').addEventListener('click', async () => {
             if (!telegramId) {
                 setStatus('Нет telegramId', 'err');
@@ -1051,6 +1241,7 @@
             }
             const targetWeight = parseFloat(document.getElementById('target-weight').value) || null;
             const targetSleep = parseFloat(document.getElementById('target-sleep').value) || null;
+
 
             setStatus('Сохраняю цели...', '');
             try {
