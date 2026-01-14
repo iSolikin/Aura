@@ -498,7 +498,7 @@
 
         .chart-wrapper {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 8px;
         }
 
         .chart-label {
@@ -526,7 +526,7 @@
         .history-day-header {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
             margin-bottom: 6px;
         }
 
@@ -535,13 +535,6 @@
             font-weight: 700;
             color: #38bdf8;
             letter-spacing: 0.4px;
-        }
-
-        .history-day-tag {
-            font-size: 11px;
-            color: #a855f7;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
         }
 
         .history-row {
@@ -734,10 +727,10 @@
     <div class="tab-panel" id="tab-history" style="display:none;">
         <div class="card">
             <div class="card-content">
-                <div class="card-title">📈 История (7 дней)</div>
+                <div class="card-title">📈 История</div>
                 
                 <!-- ГРАФИКИ -->
-                <div id="charts-container" style="margin-bottom: 20px;">
+                <div id="charts-container" style="margin-bottom: 16px;">
                     <div class="chart-wrapper">
                         <div class="chart-label">🌙 Сон (часы)</div>
                         <div class="chart-container">
@@ -1079,7 +1072,6 @@
             header.className = 'history-day-header';
             header.innerHTML = `
                 <div class="history-day-date">📅 ${date}</div>
-                <div class="history-day-tag">7 ДНЕЙ</div>
             `;
             card.appendChild(header);
 
