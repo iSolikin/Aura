@@ -32,6 +32,33 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });
 
+// ------------ Утилиты для расчета сна ------------
+
+function calculateSleepQuality(hours, sleepStart, sleepEnd) {
+    let quality = 5; // базовый рейтинг
+
+    // Если спал 7-9 часов - это хорошо
+    if (hours >= 7 && hours <= 9) {
+        quality = 8;
+    } else if (hours >= 6 && hours < 7) {
+        quality = 6;
+    } else if (hours > 9 && hours <= 10) {
+        quality = 7;
+    } else if (hours <= 5) {
+        quality = 3;
+    }
+
+    // Штраф если лег очень поздно (после 01:00)
+    if (sleepStart) {
+        const [h, m] = sleepStart.split(':').map(Number);
+        if (h >= 1 && h < 6) {
+            quality = Math.max(1, quality - 2);
+        }
+    }
+
+    return Math.max(1, Math.min(10, quality));
+}
+
 // ------------ Telegraf бот ------------
 const bot = new Telegraf(BOT_TOKEN);
 
@@ -40,7 +67,6 @@ bot.start(async (ctx) => {
     const tgUser = ctx.from;
 
     try {
-        // ищем юзера в БД
         const { data: existing, error: selectError } = await supabase
             .from('users')
             .select('*')
@@ -63,7 +89,7 @@ bot.start(async (ctx) => {
         }
 
         await ctx.reply(
-            'Привет! Это Aura — трекер сна и веса.\nНажми кнопку ниже, чтобы открыть мини-приложение 👇',
+            'Привет! Это Aura — твой трекер сна и веса.\nНажми кнопку ниже, чтобы открыть приложение 👇',
             {
                 reply_markup: {
                     inline_keyboard: [
@@ -85,14 +111,14 @@ bot.start(async (ctx) => {
     }
 });
 
-// Приём данных из WebApp через sendData
+// Приём данных из WebApp
 bot.on('web_app_data', async (ctx) => {
     try {
         const payload = JSON.parse(ctx.webAppData.data);
         console.log('Получены данные из WebApp:', payload);
 
         await ctx.reply(
-            'Я получил твои данные из Aura:\n' +
+            'Я получил твои данные:\n' +
             '```json\n' +
             JSON.stringify(payload, null, 2) +
             '\n```',
@@ -109,13 +135,13 @@ bot.on('web_app_data', async (ctx) => {
 // Запись сна
 app.post('/api/sleep', async (req, res) => {
     try {
-        const { telegramId, date, hours, quality, notes } = req.body;
+        const { telegramId, date, sleepStart, sleepEnd, notes } = req.body;
 
-        if (!telegramId || !date || !hours) {
-            return res.status(400).json({ error: 'telegramId, date и hours обязательны' });
+        if (!telegramId || !date || !sleepStart || !sleepEnd) {
+            return res.status(400).json({ error: 'telegramId, date, sleepStart и sleepEnd обязательны' });
         }
 
-        // находим пользователя
+        // Находим пользователя
         const { data: user, error: userErr } = await supabase
             .from('users')
             .select('*')
@@ -126,14 +152,31 @@ app.post('/api/sleep', async (req, res) => {
             return res.status(400).json({ error: 'user not found' });
         }
 
+        // Считаем длительность сна
+        const [startH, startM] = sleepStart.split(':').map(Number);
+        const [endH, endM] = sleepEnd.split(':').map(Number);
+
+        let startMinutes = startH * 60 + startM;
+        let endMinutes = endH * 60 + endM;
+
+        // Если время пробуждения < времени засыпания, значит пробуждение было на следующий день
+        if (endMinutes <= startMinutes) {
+            endMinutes += 24 * 60;
+        }
+
+        const hoursSlept = parseFloat(((endMinutes - startMinutes) / 60).toFixed(1));
+        const quality = calculateSleepQuality(hoursSlept, sleepStart, sleepEnd);
+
         const { data, error } = await supabase
             .from('sleep_logs')
             .upsert(
                 {
                     user_id: user.id,
                     date,
-                    hours_slept: hours,
-                    quality_rating: quality || null,
+                    sleep_start: sleepStart,
+                    sleep_end: sleepEnd,
+                    hours_slept: hoursSlept,
+                    quality_rating: quality,
                     notes: notes || null
                 },
                 { onConflict: 'user_id,date' }
@@ -145,7 +188,14 @@ app.post('/api/sleep', async (req, res) => {
             return res.status(500).json({ error: 'db error' });
         }
 
-        res.json({ ok: true, data });
+        res.json({ 
+            ok: true, 
+            data,
+            calculated: {
+                hours: hoursSlept,
+                quality
+            }
+        });
     } catch (err) {
         console.error('/api/sleep error:', err);
         res.status(500).json({ error: 'server error' });
@@ -245,11 +295,9 @@ app.listen(PORT, () => {
     console.log(`🌐 Express сервер запущен на порту ${PORT}`);
 });
 
-// запуск бота (для polling; на Vercel можно отключить и сделать webhooks)
 bot.launch().then(() => {
     console.log('🤖 Telegram бот запущен');
 });
 
-// Корректное завершение
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));

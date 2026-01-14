@@ -14,117 +14,152 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f5f5f5;
-            color: #111;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
         }
 
         .app {
             max-width: 520px;
             margin: 0 auto;
-            padding: 16px;
+            padding: 12px;
+            padding-bottom: 80px;
         }
 
         h1 {
-            font-size: 24px;
-            margin-bottom: 12px;
+            font-size: 26px;
+            margin: 16px 0 8px 0;
             text-align: center;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
         }
 
         .tabs {
             display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
+            gap: 0;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #16213e;
         }
 
         .tab {
             flex: 1;
-            padding: 10px;
+            padding: 12px;
             text-align: center;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            background-color: #fff;
+            border: none;
+            background-color: transparent;
+            color: #999;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
         }
 
         .tab.active {
-            background-color: #0088cc;
-            color: #fff;
-            border-color: #0088cc;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            color: #000;
+            font-weight: 600;
         }
 
         .card {
-            background-color: #fff;
-            border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
         }
 
         .card-title {
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            color: #00d4ff;
+            font-size: 15px;
         }
 
         .field {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .field label {
             display: block;
-            font-size: 13px;
-            margin-bottom: 4px;
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: #aaa;
+            font-weight: 500;
         }
 
         .field input,
         .field textarea,
         .field select {
             width: 100%;
-            padding: 8px 10px;
+            padding: 10px 12px;
             font-size: 14px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            background-color: rgba(15, 15, 35, 0.8);
+            color: #e0e0e0;
             outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .field input:focus,
+        .field textarea:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
         }
 
         .field textarea {
             resize: vertical;
-            min-height: 60px;
+            min-height: 70px;
         }
 
         .btn-primary {
             width: 100%;
-            padding: 10px;
-            background-color: #0088cc;
-            color: #fff;
+            padding: 12px;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            color: #000;
             border: none;
             border-radius: 8px;
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s;
         }
 
         .btn-primary:active {
-            opacity: 0.8;
+            transform: scale(0.98);
+            opacity: 0.9;
         }
 
         .status {
             font-size: 13px;
-            margin-bottom: 8px;
-            color: #555;
+            margin-bottom: 12px;
+            color: #aaa;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 3px solid #00d4ff;
         }
 
         .status.ok {
-            color: #2e7d32;
+            color: #4ade80;
+            border-left-color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
         }
 
         .status.err {
-            color: #c62828;
+            color: #ff4444;
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
         }
 
         .list-item {
-            padding: 6px 0;
-            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
             font-size: 13px;
         }
 
@@ -134,90 +169,170 @@
 
         .list-label {
             font-weight: 600;
+            color: #00d4ff;
         }
 
         .small {
             font-size: 12px;
             color: #777;
+            margin-top: 4px;
+        }
+
+        .nav-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, rgba(15, 15, 35, 0.8) 0%, rgba(15, 15, 35, 1) 100%);
+            border-top: 1px solid rgba(0, 212, 255, 0.2);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+            color: #777;
+            transition: all 0.2s;
+        }
+
+        .nav-item.active {
+            color: #00d4ff;
+        }
+
+        .calc-result {
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            text-align: center;
+        }
+
+        .calc-result-value {
+            font-size: 20px;
+            color: #00d4ff;
+            font-weight: 700;
+        }
+
+        .calc-result-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
         }
     </style>
 </head>
 <body>
 <div class="app">
-    <h1>👋 Aura – трекер</h1>
-
-    <div class="tabs">
-        <div class="tab active" data-tab="sleep">Сон</div>
-        <div class="tab" data-tab="weight">Вес</div>
-        <div class="tab" data-tab="dashboard">Дашборд</div>
-    </div>
+    <h1>🌙 Aura</h1>
 
     <!-- СТАТУС -->
     <div class="status" id="status">Инициализация...</div>
 
+    <!-- БЛОК ГЛАВНОЙ -->
+    <div class="tab-panel" id="tab-home">
+        <div class="card">
+            <div class="card-title">📊 Сегодня</div>
+            <div id="today-sleep" class="list-item">Сон: нет данных</div>
+            <div id="today-weight" class="list-item">Вес: нет данных</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">⚡ Быстрые действия</div>
+            <button class="btn-primary" onclick="switchTab('sleep')" style="margin-bottom: 8px;">🌙 Записать сон</button>
+            <button class="btn-primary" onclick="switchTab('weight')">⚖️ Записать вес</button>
+        </div>
+    </div>
+
     <!-- БЛОК СНА -->
-    <div class="card tab-panel" id="tab-sleep">
-        <div class="card-title">Записать сон за день</div>
+    <div class="tab-panel" id="tab-sleep" style="display:none;">
+        <div class="card">
+            <div class="card-title">🌙 Трекер сна</div>
 
-        <div class="field">
-            <label for="sleep-date">Дата</label>
-            <input type="date" id="sleep-date" />
+            <div class="field">
+                <label for="sleep-date">Дата</label>
+                <input type="date" id="sleep-date" />
+            </div>
+
+            <div class="field">
+                <label for="sleep-start">Время засыпания</label>
+                <input type="time" id="sleep-start" />
+            </div>
+
+            <div class="field">
+                <label for="sleep-end">Время пробуждения</label>
+                <input type="time" id="sleep-end" />
+            </div>
+
+            <div id="sleep-calc" style="display:none;">
+                <div class="calc-result">
+                    <div class="calc-result-label">Спал</div>
+                    <div class="calc-result-value" id="sleep-hours-calc">—</div>
+                    <div class="calc-result-label">Качество</div>
+                    <div class="calc-result-value" id="sleep-quality-calc">—</div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="sleep-notes">Заметки (опционально)</label>
+                <textarea id="sleep-notes" placeholder="Как почувствовал себя, возможные проблемы со сном..."></textarea>
+            </div>
+
+            <button class="btn-primary" id="btn-save-sleep">Сохранить сон</button>
         </div>
-
-        <div class="field">
-            <label for="sleep-hours">Часы сна</label>
-            <input type="number" id="sleep-hours" min="0" max="24" step="0.5" placeholder="Например, 7.5" />
-        </div>
-
-        <div class="field">
-            <label for="sleep-quality">Качество сна (1–10)</label>
-            <input type="number" id="sleep-quality" min="1" max="10" step="1" placeholder="Например, 8" />
-        </div>
-
-        <div class="field">
-            <label for="sleep-notes">Заметки (опционально)</label>
-            <textarea id="sleep-notes" placeholder="Во сколько лёг / во сколько встал, как чувствовал себя утром..."></textarea>
-        </div>
-
-        <button class="btn-primary" id="btn-save-sleep">Сохранить сон</button>
     </div>
 
     <!-- БЛОК ВЕСА -->
-    <div class="card tab-panel" id="tab-weight" style="display:none;">
-        <div class="card-title">Записать вес за день</div>
+    <div class="tab-panel" id="tab-weight" style="display:none;">
+        <div class="card">
+            <div class="card-title">⚖️ Трекер веса</div>
 
-        <div class="field">
-            <label for="weight-date">Дата</label>
-            <input type="date" id="weight-date" />
+            <div class="field">
+                <label for="weight-date">Дата</label>
+                <input type="date" id="weight-date" />
+            </div>
+
+            <div class="field">
+                <label for="weight-value">Вес (кг)</label>
+                <input type="number" id="weight-value" min="0" max="300" step="0.1" placeholder="Например, 72.4" />
+            </div>
+
+            <div class="field">
+                <label for="weight-notes">Заметки (опционально)</label>
+                <textarea id="weight-notes" placeholder="Комментарии..."></textarea>
+            </div>
+
+            <button class="btn-primary" id="btn-save-weight">Сохранить вес</button>
         </div>
-
-        <div class="field">
-            <label for="weight-value">Вес (кг)</label>
-            <input type="number" id="weight-value" min="0" max="300" step="0.1" placeholder="Например, 72.4" />
-        </div>
-
-        <div class="field">
-            <label for="weight-notes">Заметки (опционально)</label>
-            <textarea id="weight-notes" placeholder="Например, изменения в рационе или тренировках"></textarea>
-        </div>
-
-        <button class="btn-primary" id="btn-save-weight">Сохранить вес</button>
     </div>
 
-    <!-- ДАШБОРД -->
-    <div class="card tab-panel" id="tab-dashboard" style="display:none;">
-        <div class="card-title">Последние 7 дней</div>
-        <div class="field">
+    <!-- БЛОК ИСТОРИИ -->
+    <div class="tab-panel" id="tab-history" style="display:none;">
+        <div class="card">
+            <div class="card-title">📈 История последних 7 дней</div>
             <div class="small">Сон:</div>
             <div id="sleep-list"></div>
-        </div>
-
-        <div class="field">
-            <div class="small">Вес:</div>
-            <div id="weight-list"></div>
+            <div style="margin-top: 12px;">
+                <div class="small">Вес:</div>
+                <div id="weight-list"></div>
+            </div>
         </div>
     </div>
 
+</div>
+
+<!-- НИЖНЯЯ НАВИГАЦИЯ -->
+<div class="nav-bottom">
+    <div class="nav-item active" data-tab="home" onclick="navClick(this)">🏠 Главная</div>
+    <div class="nav-item" data-tab="sleep" onclick="navClick(this)">🌙 Сон</div>
+    <div class="nav-item" data-tab="weight" onclick="navClick(this)">⚖️ Вес</div>
+    <div class="nav-item" data-tab="history" onclick="navClick(this)">📈 История</div>
 </div>
 
 <script>
@@ -236,14 +351,14 @@
         try {
             const user = tg.initDataUnsafe?.user;
             if (!user) {
-                setStatus('Не удалось получить данные пользователя из Telegram', 'err');
+                setStatus('Не удалось получить данные пользователя', 'err');
                 return;
             }
             telegramId = user.id;
-            setStatus('Пользователь: ' + (user.username || user.first_name), 'ok');
+            setStatus('Добро пожаловать, ' + (user.first_name || 'друже') + '! 👋', 'ok');
         } catch (e) {
             console.error(e);
-            setStatus('Ошибка инициализации WebApp', 'err');
+            setStatus('Ошибка инициализации', 'err');
         }
     }
 
@@ -256,12 +371,16 @@
     }
 
     function switchTab(name) {
-        document.querySelectorAll('.tab').forEach(t => {
-            t.classList.toggle('active', t.dataset.tab === name);
-        });
         document.querySelectorAll('.tab-panel').forEach(p => {
             p.style.display = p.id === 'tab-' + name ? 'block' : 'none';
         });
+        document.querySelectorAll('.nav-item').forEach(n => {
+            n.classList.toggle('active', n.dataset.tab === name);
+        });
+    }
+
+    function navClick(el) {
+        switchTab(el.dataset.tab);
     }
 
     async function postJson(path, body) {
@@ -273,17 +392,40 @@
         return res.json();
     }
 
-    async function loadDashboard() {
+    async function loadTodaySummary() {
         if (!telegramId) return;
         try {
             const res = await fetch(`/api/dashboard/${telegramId}`);
             const json = await res.json();
 
-            if (!json.ok) {
-                setStatus('Ошибка загрузки дашборда', 'err');
-                console.error(json);
-                return;
+            if (!json.ok) return;
+
+            const today = isoDateToday();
+            const todaySleep = json.sleep?.find(s => s.date === today);
+            const todayWeight = json.weight?.find(w => w.date === today);
+
+            const sleepDiv = document.getElementById('today-sleep');
+            const weightDiv = document.getElementById('today-weight');
+
+            if (todaySleep) {
+                sleepDiv.innerHTML = `<span class="list-label">🌙 Сон:</span> ${todaySleep.hours_slept} ч, качество ${todaySleep.quality_rating}/10`;
             }
+
+            if (todayWeight) {
+                weightDiv.innerHTML = `<span class="list-label">⚖️ Вес:</span> ${todayWeight.weight_kg} кг`;
+            }
+        } catch (e) {
+            console.error('loadTodaySummary error:', e);
+        }
+    }
+
+    async function loadHistory() {
+        if (!telegramId) return;
+        try {
+            const res = await fetch(`/api/dashboard/${telegramId}`);
+            const json = await res.json();
+
+            if (!json.ok) return;
 
             const sleepList = document.getElementById('sleep-list');
             const weightList = document.getElementById('weight-list');
@@ -296,7 +438,7 @@
                     div.className = 'list-item';
                     div.innerHTML = `
                         <span class="list-label">${item.date}</span> – 
-                        ${item.hours_slept} ч, качество ${item.quality_rating ?? '-'}
+                        ${item.hours_slept} ч, качество ${item.quality_rating}/10
                         ${item.notes ? `<div class="small">${item.notes}</div>` : ''}
                     `;
                     sleepList.appendChild(div);
@@ -321,9 +463,53 @@
             }
 
         } catch (e) {
-            console.error(e);
-            setStatus('Ошибка загрузки дашборда', 'err');
+            console.error('loadHistory error:', e);
         }
+    }
+
+    // Расчет сна при вводе времён
+    function calcSleep() {
+        const start = document.getElementById('sleep-start').value;
+        const end = document.getElementById('sleep-end').value;
+
+        if (!start || !end) {
+            document.getElementById('sleep-calc').style.display = 'none';
+            return;
+        }
+
+        const [startH, startM] = start.split(':').map(Number);
+        const [endH, endM] = end.split(':').map(Number);
+
+        let startMinutes = startH * 60 + startM;
+        let endMinutes = endH * 60 + endM;
+
+        if (endMinutes <= startMinutes) {
+            endMinutes += 24 * 60;
+        }
+
+        const hours = parseFloat(((endMinutes - startMinutes) / 60).toFixed(1));
+
+        // Рассчитываем качество (копируем логику из бота)
+        let quality = 5;
+        if (hours >= 7 && hours <= 9) {
+            quality = 8;
+        } else if (hours >= 6 && hours < 7) {
+            quality = 6;
+        } else if (hours > 9 && hours <= 10) {
+            quality = 7;
+        } else if (hours <= 5) {
+            quality = 3;
+        }
+
+        if (startH >= 1 && startH < 6) {
+            quality = Math.max(1, quality - 2);
+        }
+
+        quality = Math.max(1, Math.min(10, quality));
+
+        document.getElementById('sleep-hours-calc').textContent = hours + ' часов';
+        document.getElementById('sleep-quality-calc').textContent = quality + '/10';
+        document.getElementById('sleep-calc').style.display = 'block';
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -333,28 +519,21 @@
         document.getElementById('sleep-date').value = isoDateToday();
         document.getElementById('weight-date').value = isoDateToday();
 
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const name = tab.dataset.tab;
-                switchTab(name);
-                if (name === 'dashboard') {
-                    loadDashboard();
-                }
-            });
-        });
+        document.getElementById('sleep-start').addEventListener('change', calcSleep);
+        document.getElementById('sleep-end').addEventListener('change', calcSleep);
 
         document.getElementById('btn-save-sleep').addEventListener('click', async () => {
             if (!telegramId) {
-                setStatus('Нет telegramId, перезапусти бота', 'err');
+                setStatus('Нет telegramId', 'err');
                 return;
             }
             const date = document.getElementById('sleep-date').value;
-            const hours = parseFloat(document.getElementById('sleep-hours').value);
-            const quality = parseInt(document.getElementById('sleep-quality').value || '0', 10);
+            const sleepStart = document.getElementById('sleep-start').value;
+            const sleepEnd = document.getElementById('sleep-end').value;
             const notes = document.getElementById('sleep-notes').value.trim();
 
-            if (!date || isNaN(hours)) {
-                setStatus('Укажи дату и часы сна', 'err');
+            if (!date || !sleepStart || !sleepEnd) {
+                setStatus('Укажи дату и время засыпания/пробуждения', 'err');
                 return;
             }
 
@@ -363,27 +542,27 @@
                 const json = await postJson('/api/sleep', {
                     telegramId,
                     date,
-                    hours,
-                    quality: quality || null,
+                    sleepStart,
+                    sleepEnd,
                     notes
                 });
                 if (json.ok) {
-                    setStatus('Сон сохранён', 'ok');
+                    setStatus(`Сон сохранён! ${json.calculated.hours}ч, качество ${json.calculated.quality}/10 ✅`, 'ok');
+                    loadTodaySummary();
                     tg.HapticFeedback?.notificationOccurred('success');
                 } else {
-                    console.error(json);
                     setStatus('Ошибка сохранения сна', 'err');
                     tg.HapticFeedback?.notificationOccurred('error');
                 }
             } catch (e) {
                 console.error(e);
-                setStatus('Ошибка сети при сохранении сна', 'err');
+                setStatus('Ошибка сети', 'err');
             }
         });
 
         document.getElementById('btn-save-weight').addEventListener('click', async () => {
             if (!telegramId) {
-                setStatus('Нет telegramId, перезапусти бота', 'err');
+                setStatus('Нет telegramId', 'err');
                 return;
             }
             const date = document.getElementById('weight-date').value;
@@ -404,18 +583,20 @@
                     notes
                 });
                 if (json.ok) {
-                    setStatus('Вес сохранён', 'ok');
+                    setStatus(`Вес сохранён ${weight} кг ✅`, 'ok');
+                    loadTodaySummary();
                     tg.HapticFeedback?.notificationOccurred('success');
                 } else {
-                    console.error(json);
                     setStatus('Ошибка сохранения веса', 'err');
                     tg.HapticFeedback?.notificationOccurred('error');
                 }
             } catch (e) {
                 console.error(e);
-                setStatus('Ошибка сети при сохранении веса', 'err');
+                setStatus('Ошибка сети', 'err');
             }
         });
+
+        loadTodaySummary();
     });
 </script>
 </body>
