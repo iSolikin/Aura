@@ -345,6 +345,69 @@
             background: rgba(255, 107, 107, 0.1);
         }
 
+                .history-day-card {
+            background: linear-gradient(135deg, rgba(15, 52, 96, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+            border-radius: 14px;
+            border: 1px solid rgba(124, 58, 237, 0.35);
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.7);
+        }
+
+        .history-day-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .history-day-date {
+            font-size: 12px;
+            font-weight: 700;
+            color: #38bdf8;
+            letter-spacing: 0.4px;
+        }
+
+        .history-day-tag {
+            font-size: 11px;
+            color: #a855f7;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .history-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            padding-top: 4px;
+        }
+
+        .history-row + .history-row {
+            border-top: 1px dashed rgba(148, 163, 184, 0.35);
+            margin-top: 4px;
+        }
+
+        .history-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #e5e7eb;
+        }
+
+        .history-label span.icon {
+            font-size: 14px;
+        }
+
+        .history-main {
+            font-weight: 600;
+            color: #f9fafb;
+        }
+
+        .history-sub {
+            font-size: 11px;
+            color: #9ca3af;
+        }
 
         .list-item {
             padding: 10px 0;
@@ -762,14 +825,7 @@
 
                 <!-- ИСТОРИЯ -->
                 <div style="border-top: 1px solid rgba(124, 58, 237, 0.15); padding-top: 16px;">
-                    <div style="margin-bottom: 14px;">
-                        <div class="small" style="margin-bottom: 8px;">🌙 СОН:</div>
-                        <div id="sleep-list"></div>
-                    </div>
-                    <div>
-                        <div class="small" style="margin-bottom: 8px;">⚖️ ВЕС:</div>
-                        <div id="weight-list"></div>
-                    </div>
+                    <div id="history-days"></div>
                 </div>
             </div>
         </div>
