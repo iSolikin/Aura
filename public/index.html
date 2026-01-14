@@ -706,13 +706,11 @@
 
             // Отображение сегодня
             if (todaySleep) {
-                let sleepText = `${todaySleep.hours_slept}ч`;
-                if (todaySleep.sleep_start && todaySleep.sleep_end) {
-                    sleepText = `${todaySleep.hours_slept}ч (${todaySleep.sleep_start}–${todaySleep.sleep_end})`;
-                }
-                sleepVal.textContent = sleepText;
+                const hours = todaySleep.hours_slept;
+                sleepVal.textContent = `${hours}ч сна`;
                 sleepVal.classList.remove('empty');
             }
+
 
             if (todayWeight) {
                 let weightText = `${todayWeight.weight_kg}кг`;
