@@ -268,6 +268,14 @@
             animation: slideInDown 0.3s ease;
         }
 
+        .status.hide-status {
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+
         @keyframes slideInDown {
             from {
                 opacity: 0;
@@ -630,6 +638,18 @@
         el.className = 'status ' + (type || '');
     }
 
+        function showGreeting(text) {
+        const el = document.getElementById('status');
+        el.textContent = text;
+        el.className = 'status ok';
+
+        // показываем 2.5 секунды, потом прячем
+        setTimeout(() => {
+            el.classList.add('hide-status');
+        }, 2500);
+    }
+
+
     function initUser() {
         try {
             const user = tg.initDataUnsafe?.user;
@@ -637,14 +657,34 @@
                 setStatus('Ошибка при загрузке', 'err');
                 return;
             }
+
+
+
             telegramId = user.id;
-            setStatus('Привет, ' + (user.first_name || 'друже') + '! ✨', 'ok');
+
+            const name = user.first_name || 'друже';
+
+            const hour = new Date().getHours();
+            let greet;
+            if (hour >= 5 && hour < 12) {
+                greet = 'Доброе утро';
+            } else if (hour >= 12 && hour < 18) {
+                greet = 'Добрый день';
+            } else if (hour >= 18 && hour < 23) {
+                greet = 'Добрый вечер';
+            } else {
+                greet = 'Доброй ночи';
+            }
+
+            showGreeting(`${greet}, ${name}! ✨`);
+
             loadTodaySummary();
         } catch (e) {
             console.error(e);
             setStatus('Ошибка инициализации', 'err');
         }
     }
+
 
     function isoDateToday() {
         const d = new Date();
