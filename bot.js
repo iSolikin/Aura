@@ -101,29 +101,13 @@ bot.start(async (ctx) => {
     }
 });
 
-bot.on('web_app_data', async (ctx) => {
-    try {
-        const payload = JSON.parse(ctx.webAppData.data);
-        console.log('Получены данные из WebApp:', payload);
-        await ctx.reply(
-            'Я получил твои данные:\n```json\n' +
-            JSON.stringify(payload, null, 2) +
-            '\n```',
-            { parse_mode: 'Markdown' }
-        );
-    } catch (err) {
-        console.error('web_app_data parse error:', err);
-        await ctx.reply('Не удалось обработать данные из приложения.');
-    }
-});
-
 // SLEEP
 app.post('/api/sleep', async (req, res) => {
     try {
         const { telegramId, date, sleepStart, sleepEnd, notes } = req.body;
 
         if (!telegramId || !date || !sleepStart || !sleepEnd) {
-            return res.status(400).json({ error: 'telegramId, date, sleepStart и sleepEnd обязательны' });
+            return res.status(400).json({ error: 'Missing required fields' });
         }
 
         const { data: user, error: userErr } = await supabase
@@ -164,28 +148,24 @@ app.post('/api/sleep', async (req, res) => {
             .select();
 
         if (error) {
-            console.error('supabase sleep upsert error:', error);
+            console.error('supabase sleep error:', error);
             return res.status(500).json({ error: 'db error' });
         }
 
-        res.json({
-            ok: true,
-            data,
-            calculated: { hours: hoursSlept, quality }
-        });
+        res.json({ ok: true, data, calculated: { hours: hoursSlept, quality } });
     } catch (err) {
         console.error('/api/sleep error:', err);
         res.status(500).json({ error: 'server error' });
     }
 });
 
-// WEIGHT — НЕСКОЛЬКО ЗАПИСЕЙ В ДЕНЬ
+// WEIGHT
 app.post('/api/weight', async (req, res) => {
     try {
         const { telegramId, date, weight, notes } = req.body;
 
         if (!telegramId || !date || weight === undefined || weight === null) {
-            return res.status(400).json({ error: 'telegramId, date и weight обязательны' });
+            return res.status(400).json({ error: 'Missing required fields' });
         }
 
         const { data: user, error: userErr } = await supabase
@@ -198,20 +178,22 @@ app.post('/api/weight', async (req, res) => {
             return res.status(400).json({ error: 'user not found' });
         }
 
-        // INSERT вместо UPSERT — позволяет несколько записей за день
         const { data, error } = await supabase
             .from('weight_logs')
-            .insert({
-                user_id: user.id,
-                date,
-                weight_kg: parseFloat(weight),
-                notes: notes || null
-            })
+            .upsert(
+                {
+                    user_id: user.id,
+                    date,
+                    weight_kg: parseFloat(weight),
+                    notes: notes || null
+                },
+                { onConflict: 'user_id,date' }
+            )
             .select();
 
         if (error) {
-            console.error('supabase weight insert error:', error);
-            return res.status(500).json({ error: error.message || 'db error' });
+            console.error('supabase weight error:', error);
+            return res.status(500).json({ error: 'db error' });
         }
 
         res.json({ ok: true, data });
@@ -227,7 +209,7 @@ app.post('/api/settings', async (req, res) => {
         const { telegramId, targetWeightKg, targetSleepHours } = req.body;
 
         if (!telegramId) {
-            return res.status(400).json({ error: 'telegramId обязателен' });
+            return res.status(400).json({ error: 'telegramId required' });
         }
 
         const { data: user, error: userErr } = await supabase
@@ -251,7 +233,7 @@ app.post('/api/settings', async (req, res) => {
             .select();
 
         if (error) {
-            console.error('supabase settings update error:', error);
+            console.error('supabase settings error:', error);
             return res.status(500).json({ error: 'db error' });
         }
 
@@ -262,7 +244,7 @@ app.post('/api/settings', async (req, res) => {
     }
 });
 
-// DASHBOARD 7 DAYS
+// DASHBOARD
 app.get('/api/dashboard/:telegramId', async (req, res) => {
     try {
         const telegramId = req.params.telegramId;
@@ -289,8 +271,7 @@ app.get('/api/dashboard/:telegramId', async (req, res) => {
             .select('*')
             .eq('user_id', user.id)
             .order('date', { ascending: false })
-            .order('created_at', { ascending: false })
-            .limit(30);
+            .limit(7);
 
         if (sleepErr || weightErr) {
             console.error('dashboard errors:', sleepErr, weightErr);
