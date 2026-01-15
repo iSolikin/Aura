@@ -190,7 +190,9 @@ app.post('/api/weight', async (req, res) => {
             .eq('telegram_id', telegramId)
             .maybeSingle();
 
-        if (userErr || !user) return res.status(400).json({ error: 'user not found' });
+        if (userErr || !user) {
+            return res.status(400).json({ error: 'user not found' });
+        }
 
         // вместо upsert по (user_id,date) просто создаём новую запись
         const { data, error } = await supabase
@@ -214,6 +216,7 @@ app.post('/api/weight', async (req, res) => {
         res.status(500).json({ error: 'server error' });
     }
 });
+
 
 
 // settings
