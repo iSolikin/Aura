@@ -1065,7 +1065,8 @@
 
         weightLogs.forEach(item => {
             if (!byDate[item.date]) byDate[item.date] = {};
-            byDate[item.date].weight = item;
+            if (!byDate[item.date].weight) byDate[item.date].weight = [];
+            byDate[item.date].weight.push(item);
         });
 
         const dates = Object.keys(byDate).sort((a, b) => new Date(b) - new Date(a));
@@ -1102,21 +1103,29 @@
                 card.appendChild(row);
             }
 
-            if (day.weight) {
-                const w = day.weight;
-                const row = document.createElement('div');
-                row.className = 'history-row';
-                row.innerHTML = `
-                    <div class="history-label">
-                        <span class="icon">⚖️</span>
-                        <div>
-                            <div class="history-main">${w.weight_kg}кг</div>
-                            <div class="history-sub">${w.notes ? w.notes : 'без заметок'}</div>
+            if (day.weight && Array.isArray(day.weight)) {
+                day.weight.forEach(w => {
+                    // created_at приходит из Supabase, если включён стандартный timestamp
+                    const created = w.created_at ? new Date(w.created_at) : null;
+                    const timeStr = created
+                        ? created.toTimeString().slice(0, 5)     // 09:32
+                        : (w.notes || 'время не указано');
+
+                    const row = document.createElement('div');
+                    row.className = 'history-row';
+                    row.innerHTML = `
+                        <div class="history-label">
+                            <span class="icon">⚖️</span>
+                            <div>
+                                <div class="history-main">${w.weight_kg}кг</div>
+                                <div class="history-sub">Запись в ${timeStr}</div>
+                            </div>
                         </div>
-                    </div>
-                `;
-                card.appendChild(row);
-            }
+                    `;
+                    card.appendChild(row);
+                });
+    }
+
 
             container.appendChild(card);
         });

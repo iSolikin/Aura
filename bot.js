@@ -177,44 +177,44 @@ app.post('/api/sleep', async (req, res) => {
 
 // weight
 app.post('/api/weight', async (req, res) => {
-  try {
-    const { telegramId, date, weight, notes } = req.body;
-    if (!telegramId || !date || !weight) {
-      return res.status(400).json({ error: 'telegramId, date и weight обязательны' });
+    try {
+        const { telegramId, date, weight, notes } = req.body;
+
+        if (!telegramId || !date || !weight) {
+            return res.status(400).json({ error: 'telegramId, date и weight обязательны' });
+        }
+
+        const { data: user, error: userErr } = await supabase
+            .from('users')
+            .select('*')
+            .eq('telegram_id', telegramId)
+            .maybeSingle();
+
+        if (userErr || !user) return res.status(400).json({ error: 'user not found' });
+
+        // вместо upsert по (user_id,date) просто создаём новую запись
+        const { data, error } = await supabase
+            .from('weight_logs')
+            .insert({
+                user_id: user.id,
+                date,
+                weight_kg: weight,
+                notes: notes || null
+            })
+            .select();
+
+        if (error) {
+            console.error('supabase weight insert error:', error);
+            return res.status(500).json({ error: 'db error' });
+        }
+
+        res.json({ ok: true, data });
+    } catch (err) {
+        console.error('/api/weight error:', err);
+        res.status(500).json({ error: 'server error' });
     }
-
-    const { data: user, error: userErr } = await supabase
-      .from('users')
-      .select('*')
-      .eq('telegram_id', telegramId)
-      .maybeSingle();
-
-    if (userErr || !user) return res.status(400).json({ error: 'user not found' });
-
-    const { data, error } = await supabase
-      .from('weight_logs')
-      .upsert(
-        {
-          user_id: user.id,
-          date,
-          weight_kg: weight,
-          notes: notes || null
-        },
-        { onConflict: 'user_id,date' }
-      )
-      .select();
-
-    if (error) {
-      console.error('supabase weight upsert error:', error);
-      return res.status(500).json({ error: 'db error' });
-    }
-
-    res.json({ ok: true, data });
-  } catch (err) {
-    console.error('/api/weight error:', err);
-    res.status(500).json({ error: 'server error' });
-  }
 });
+
 
 // settings
 app.post('/api/settings', async (req, res) => {
