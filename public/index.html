@@ -1055,7 +1055,7 @@
         }
     }
 
-    function renderHistoryCards(container, sleepLogs, weightLogs) {
+        function renderHistoryCards(container, sleepLogs, weightLogs) {
         const byDate = {};
 
         sleepLogs.forEach(item => {
@@ -1103,13 +1103,17 @@
                 card.appendChild(row);
             }
 
+            // НЕСКОЛЬКО ВЕСОВ В ДЕНЬ с временем записи
             if (day.weight && Array.isArray(day.weight)) {
                 day.weight.forEach(w => {
-                    // created_at приходит из Supabase, если включён стандартный timestamp
                     const created = w.created_at ? new Date(w.created_at) : null;
                     const timeStr = created
-                        ? created.toTimeString().slice(0, 5)     // 09:32
-                        : (w.notes || 'время не указано');
+                        ? created.toLocaleTimeString('ru-RU', {
+                            timeZone: 'Europe/Moscow',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })
+                        : 'время не указано';
 
                     const row = document.createElement('div');
                     row.className = 'history-row';
@@ -1124,12 +1128,12 @@
                     `;
                     card.appendChild(row);
                 });
-    }
-
+            }
 
             container.appendChild(card);
         });
     }
+
 
     function renderSleepChart(dates, hours) {
         const ctx = document.getElementById('sleepChart');
