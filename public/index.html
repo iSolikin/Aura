@@ -1,1454 +1,1604 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aura – трекер сна и веса</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: radial-gradient(ellipse at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-                        radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                        linear-gradient(135deg, #0a0e27 0%, #16213e 50%, #0f3460 100%);
-            color: #e0e0e0;
-            min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(0,212,255,0.03)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .app {
-            max-width: 520px;
-            margin: 0 auto;
-            padding: 12px;
-            padding-bottom: 80px;
-            position: relative;
-            z-index: 1;
-        }
-
-        h1 {
-            font-size: 32px;
-            margin: 20px 0 4px 0;
-            text-align: center;
-            background: linear-gradient(135deg, #7c3aed, #06b6d4, #0ea5e9, #7c3aed);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientShift 6s ease infinite;
-            font-weight: 700;
-            letter-spacing: -1px;
-        }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .card {
-            background: linear-gradient(135deg, rgba(30, 41, 82, 0.7) 0%, rgba(15, 52, 96, 0.5) 100%);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 18px;
-            margin-bottom: 14px;
-            box-shadow: 0 8px 32px rgba(124, 58, 237, 0.1),
-                        inset 0 1px 1px rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(124, 58, 237, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(124, 58, 237, 0.2), transparent);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        .card-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .card-title {
-            font-weight: 700;
-            margin-bottom: 14px;
-            color: #7c3aed;
-            font-size: 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .today-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .today-item {
-            background: rgba(124, 58, 237, 0.1);
-            border: 1px solid rgba(124, 58, 237, 0.2);
-            border-radius: 12px;
-            padding: 14px;
-            text-align: center;
-        }
-
-        .today-label {
-            font-size: 11px;
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        .today-value {
-            font-size: 16px;
-            color: #7c3aed;
-            font-weight: 700;
-        }
-
-        .today-value.empty {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .actions-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .btn-compact {
-            padding: 10px 12px;
-            background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(6, 182, 212, 0.2));
-            border: 1px solid rgba(124, 58, 237, 0.4);
-            color: #e0e0e0;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-        }
-
-        .btn-compact:hover {
-            background: linear-gradient(135deg, rgba(124, 58, 237, 0.5), rgba(6, 182, 212, 0.4));
-            border-color: #7c3aed;
-        }
-
-        .btn-compact:active {
-            transform: scale(0.98);
-        }
-
-        .field {
-            margin-bottom: 14px;
-        }
-
-        .field label {
-            display: block;
-            font-size: 12px;
-            margin-bottom: 6px;
-            color: #aaa;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .field input,
-        .field textarea,
-        .field select {
-            width: 100%;
-            padding: 12px 14px;
-            font-size: 14px;
-            border-radius: 10px;
-            border: 1px solid rgba(124, 58, 237, 0.4);
-            background: rgba(10, 14, 39, 0.8);
-            color: #e0e0e0;
-            outline: none;
-            transition: all 0.3s;
-            font-family: inherit;
-        }
-
-        .field input:focus,
-        .field textarea:focus {
-            border-color: #7c3aed;
-            box-shadow: 0 0 20px rgba(124, 58, 237, 0.3),
-                        inset 0 0 10px rgba(124, 58, 237, 0.1);
-            background: rgba(10, 14, 39, 0.95);
-        }
-
-        .field textarea {
-            resize: vertical;
-            min-height: 70px;
-        }
-
-        .btn-primary {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.2);
-        }
-
-        .btn-primary:hover::before {
-            left: 100%;
-        }
-
-        .status {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 4px;
-            font-size: 13px;
-            margin: 0;
-            color: #aaa;
-            padding: 8px 14px;
-            border-radius: 10px;
-            background: rgba(124, 58, 237, 0.12);
-            border-left: 3px solid #7c3aed;
-            backdrop-filter: blur(10px);
-            animation: slideInDown 0.3s ease;
-        }
-
-        .status.hide-status {
-            opacity: 0;
-            transform: translateY(-10px);
-            pointer-events: none;
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-
-        @keyframes slideInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .status.ok {
-            color: #4ade80;
-            border-left-color: #4ade80;
-            background: rgba(74, 222, 128, 0.1);
-        }
-
-        .status.err {
-            color: #ff6b6b;
-            border-left-color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.1);
-        }
-
-        .list-item {
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(124, 58, 237, 0.15);
-            font-size: 13px;
-        }
-
-        .list-item:last-child {
-            border-bottom: none;
-        }
-
-        .list-label {
-            font-weight: 700;
-            color: #06b6d4;
-        }
-
-        .small {
-            font-size: 12px;
-            color: #888;
-            margin-top: 4px;
-        }
-
-        .nav-bottom {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(180deg, rgba(10, 14, 39, 0) 0%, rgba(10, 14, 39, 0.95) 50%, rgba(10, 14, 39, 1) 100%);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(124, 58, 237, 0.2);
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 0 16px 0;
-            max-width: 520px;
-            margin: 0 auto;
-            z-index: 50;
-        }
-
-        .nav-item {
-            flex: 1;
-            padding: 8px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 20px;
-            color: #555;
-            transition: all 0.3s;
-            border-radius: 8px;
-            margin: 0 4px;
-        }
-
-        .nav-item.active {
-            color: #7c3aed;
-            background: rgba(124, 58, 237, 0.1);
-        }
-
-        .calc-result {
-            background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 14px;
-            border: 1px solid rgba(124, 58, 237, 0.3);
-            text-align: center;
-        }
-
-        .calc-result-value {
-            font-size: 22px;
-            color: #7c3aed;
-            font-weight: 700;
-            margin: 6px 0;
-        }
-
-        .calc-result-label {
-            font-size: 11px;
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .goal-card {
-            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(6, 182, 212, 0.05) 100%);
-            border: 1px solid rgba(124, 58, 237, 0.2);
-            border-radius: 12px;
-            padding: 12px;
-        }
-
-        .goal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .goal-label {
-            font-size: 13px;
-            font-weight: 700;
-            color: #7c3aed;
-        }
-
-        .goal-percent {
-            font-size: 12px;
-            font-weight: 700;
-            color: #06b6d4;
-        }
-
-        .goal-progress {
-            margin-bottom: 8px;
-        }
-
-        .goal-progress-bar {
-            width: 100%;
-            height: 6px;
-            background: rgba(124, 58, 237, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid rgba(124, 58, 237, 0.15);
-        }
-
-        .goal-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #7c3aed, #06b6d4);
-            width: 0%;
-            transition: width 0.4s ease;
-            box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
-        }
-
-        .goal-text {
-            font-size: 11px;
-            color: #aaa;
-            text-align: center;
-            letter-spacing: 0.5px;
-        }
-
-        .header-wrap {
-            position: relative;
-            height: 56px;
-            margin-bottom: 8px;
-        }
-
-        #aura-title {
-            font-size: 32px;
-            text-align: center;
-            background: linear-gradient(135deg, #7c3aed, #06b6d4, #0ea5e9, #7c3aed);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientShift 6s ease infinite;
-            font-weight: 700;
-            letter-spacing: -1px;
-            opacity: 0;
-            transform: translateY(-10px);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-
-        #aura-title.title-visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .streak-card {
-            text-align: center;
-            padding: 16px 18px;
-            background: linear-gradient(135deg, rgba(255,107,107,0.1) 0%, rgba(255,165,0,0.1) 100%);
-            border: 2px solid rgba(255,107,107,0.3);
-            border-radius: 16px;
-            margin-bottom: 14px;
-        }
-
-        .streak-emoji {
-            font-size: 36px;
-            margin-bottom: 4px;
-        }
-
-        .streak-number {
-            color: #ff6b6b;
-            font-size: 24px;
-            margin-bottom: 2px;
-            font-weight: 700;
-        }
-
-        .streak-text {
-            font-size: 11px;
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .streak-number.active {
-            animation: pulse 1s ease-in-out;
-        }
-
-        .chart-wrapper {
-            position: relative;
-            margin-bottom: 8px;
-        }
-
-        .chart-label {
-            font-size: 12px;
-            color: #aaa;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 200px;
-        }
-
-        .history-day-card {
-            background: linear-gradient(135deg, rgba(15, 52, 96, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
-            border-radius: 14px;
-            border: 1px solid rgba(124, 58, 237, 0.35);
-            padding: 10px 12px;
-            margin-bottom: 10px;
-            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.7);
-        }
-
-        .history-day-header {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            margin-bottom: 6px;
-        }
-
-        .history-day-date {
-            font-size: 12px;
-            font-weight: 700;
-            color: #38bdf8;
-            letter-spacing: 0.4px;
-        }
-
-        .history-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 12px;
-            padding-top: 4px;
-        }
-
-        .history-row + .history-row {
-            border-top: 1px dashed rgba(148, 163, 184, 0.35);
-            margin-top: 4px;
-        }
-
-        .history-label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #e5e7eb;
-        }
-
-        .history-label span.icon {
-            font-size: 14px;
-        }
-
-        .history-main {
-            font-weight: 600;
-            color: #f9fafb;
-        }
-
-        .history-sub {
-            font-size: 11px;
-            color: #9ca3af;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura — Трекер сна и веса</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: radial-gradient(ellipse at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                  linear-gradient(135deg, #0a0e27 0%, #16213e 50%, #0f3460 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(0,212,255,0.03)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 12px;
+      padding-bottom: 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin: 20px 0 4px 0;
+      text-align: center;
+      background: linear-gradient(135deg, #7c3aed, #06b6d4, #0ea5e9, #7c3aed);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradientShift 6s ease infinite;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .card {
+      background: linear-gradient(135deg, rgba(30, 41, 82, 0.7) 0%, rgba(15, 52, 96, 0.5) 100%);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 32px rgba(124, 58, 237, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.2), transparent);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .card-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-title {
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: #7c3aed;
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .today-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .today-item {
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .today-item.sleep-item {
+      border-color: rgba(59, 130, 246, 0.3);
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    .today-item.weight-item {
+      border-color: rgba(6, 182, 212, 0.3);
+      background: rgba(6, 182, 212, 0.08);
+    }
+
+    .today-label {
+      font-size: 11px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .today-value {
+      font-size: 16px;
+      color: #7c3aed;
+      font-weight: 700;
+    }
+
+    .today-item.sleep-item .today-value {
+      color: #3b82f6;
+    }
+
+    .today-item.weight-item .today-value {
+      color: #06b6d4;
+    }
+
+    .today-value.empty {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-compact {
+      padding: 10px 12px;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(6, 182, 212, 0.2));
+      border: 1px solid rgba(124, 58, 237, 0.4);
+      color: #e0e0e0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+
+    .btn-compact:hover {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.5), rgba(6, 182, 212, 0.4));
+      border-color: #7c3aed;
+    }
+
+    .btn-compact:active {
+      transform: scale(0.98);
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 6px;
+      color: #aaa;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(124, 58, 237, 0.4);
+      background: rgba(10, 14, 39, 0.8);
+      color: #e0e0e0;
+      outline: none;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      border-color: #7c3aed;
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.3), inset 0 0 10px rgba(124, 58, 237, 0.1);
+      background: rgba(10, 14, 39, 0.95);
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    /* Inline calculator для сна */
+    .sleep-calc-inline {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    .sleep-calc-inline .calc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .sleep-calc-inline .calc-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .sleep-calc-inline .calc-label {
+      color: #aaa;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .sleep-calc-inline .calc-value {
+      color: #3b82f6;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 15px rgba(124, 58, 237, 0.2);
+    }
+
+    .btn-primary:hover::before {
+      left: 100%;
+    }
+
+    .status {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 4px;
+      font-size: 13px;
+      margin: 0;
+      color: #aaa;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(124, 58, 237, 0.12);
+      border-left: 3px solid #7c3aed;
+      backdrop-filter: blur(10px);
+      animation: slideInDown 0.3s ease;
+    }
+
+    .status.hide-status {
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    @keyframes slideInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .status.ok {
+      color: #4ade80;
+      border-left-color: #4ade80;
+      background: rgba(74, 222, 128, 0.1);
+    }
+
+    .status.err {
+      color: #ff6b6b;
+      border-left-color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.1);
+    }
+
+    .list-item {
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+      font-size: 13px;
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .list-label {
+      font-weight: 700;
+      color: #06b6d4;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .nav-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, rgba(10, 14, 39, 0) 0%, rgba(10, 14, 39, 0.95) 50%, rgba(10, 14, 39, 1) 100%);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(124, 58, 237, 0.2);
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0 16px 0;
+      max-width: 520px;
+      margin: 0 auto;
+      z-index: 50;
+    }
+
+    .nav-item {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 20px;
+      color: #555;
+      transition: all 0.3s;
+      border-radius: 8px;
+      margin: 0 4px;
+    }
+
+    .nav-item.active {
+      color: #7c3aed;
+      background: rgba(124, 58, 237, 0.1);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .calc-result {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      text-align: center;
+    }
+
+    .calc-result-value {
+      font-size: 22px;
+      color: #7c3aed;
+      font-weight: 700;
+      margin: 6px 0;
+    }
+
+    .calc-result-label {
+      font-size: 11px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .goal-card {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(6, 182, 212, 0.05) 100%);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .goal-card.sleep-goal {
+      border-color: rgba(59, 130, 246, 0.3);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+    }
+
+    .goal-card.weight-goal {
+      border-color: rgba(6, 182, 212, 0.3);
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(6, 182, 212, 0.05) 100%);
+    }
+
+    .goal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .goal-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #7c3aed;
+    }
+
+    .goal-card.sleep-goal .goal-label {
+      color: #3b82f6;
+    }
+
+    .goal-card.weight-goal .goal-label {
+      color: #06b6d4;
+    }
+
+    .goal-status-icon {
+      font-size: 16px;
+    }
+
+    .goal-percent {
+      font-size: 12px;
+      font-weight: 700;
+      color: #06b6d4;
+    }
+
+    .goal-progress {
+      margin-bottom: 8px;
+    }
+
+    .goal-progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(124, 58, 237, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(124, 58, 237, 0.15);
+    }
+
+    .goal-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #7c3aed, #06b6d4);
+      width: 0;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
+    }
+
+    .goal-card.sleep-goal .goal-progress-fill {
+      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    }
+
+    .goal-card.weight-goal .goal-progress-fill {
+      background: linear-gradient(90deg, #06b6d4, #10b981);
+    }
+
+    .goal-text {
+      font-size: 11px;
+      color: #aaa;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    .header-wrap {
+      position: relative;
+      height: 56px;
+      margin-bottom: 8px;
+    }
+
+    aura-title {
+      font-size: 32px;
+      text-align: center;
+      background: linear-gradient(135deg, #7c3aed, #06b6d4, #0ea5e9, #7c3aed);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradientShift 6s ease infinite;
+      font-weight: 700;
+      letter-spacing: -1px;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    aura-title.title-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .streak-card {
+      text-align: center;
+      padding: 16px 18px;
+      background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 165, 0, 0.1) 100%);
+      border: 2px solid rgba(255, 107, 107, 0.3);
+      border-radius: 16px;
+      margin-bottom: 14px;
+    }
+
+    .streak-emoji {
+      font-size: 36px;
+      margin-bottom: 4px;
+    }
+
+    .streak-number {
+      color: #ff6b6b;
+      font-size: 24px;
+      margin-bottom: 2px;
+      font-weight: 700;
+    }
+
+    .streak-text {
+      font-size: 11px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .streak-number.active {
+      animation: pulse 1s ease-in-out;
+    }
+
+    /* Stats filter tabs */
+    .stats-filter {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+    }
+
+    .stats-filter-btn {
+      padding: 6px 12px;
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      color: #aaa;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .stats-filter-btn:hover {
+      border-color: #7c3aed;
+      color: #7c3aed;
+    }
+
+    .stats-filter-btn.active {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(6, 182, 212, 0.2));
+      border-color: #7c3aed;
+      color: #7c3aed;
+    }
+
+    .stats-value {
+      font-size: 13px;
+      color: #aaa;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(124, 58, 237, 0.1);
+    }
+
+    .chart-wrapper {
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .chart-label {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 200px;
+    }
+
+    .history-day-card {
+      background: linear-gradient(135deg, rgba(15, 52, 96, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border-radius: 14px;
+      border: 1px solid rgba(124, 58, 237, 0.35);
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.7);
+    }
+
+    .history-day-header {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 6px;
+    }
+
+    .history-day-date {
+      font-size: 12px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 0.4px;
+    }
+
+    .history-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      padding-top: 4px;
+    }
+
+    .history-row + .history-row {
+      border-top: 1px dashed rgba(148, 163, 184, 0.35);
+      margin-top: 4px;
+    }
+
+    .history-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #e5e7eb;
+    }
+
+    .history-label span.icon {
+      font-size: 14px;
+    }
+
+    .history-main {
+      font-weight: 600;
+      color: #f9fafb;
+    }
+
+    .history-sub {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .app {
+        padding: 8px;
+        padding-bottom: 80px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .card {
+        padding: 14px;
+        margin-bottom: 10px;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="app">
+  <div class="app">
+    <!-- HEADER -->
     <div class="header-wrap">
-        <h1 id="aura-title">✨ Aura</h1>
-        <div class="status" id="status">Загружаю...</div>
+      <h1 id="aura-title">✨ Aura</h1>
     </div>
 
-    <!-- БЛОК ГЛАВНОЙ -->
-    <div class="tab-panel" id="tab-home">
-        <div class="card">
-            <div class="card-content">
-                <div class="card-title">📊 Сегодня</div>
-                <div class="today-grid">
-                    <div class="today-item">
-                        <div class="today-label">Сон</div>
-                        <div id="today-sleep-val" class="today-value empty">—</div>
-                        <div id="today-sleep-target" class="small" style="margin-top: 6px; color: #888;"></div>
-                    </div>
-                    <div class="today-item">
-                        <div class="today-label">Вес</div>
-                        <div id="today-weight-val" class="today-value empty">—</div>
-                        <div id="today-weight-target" class="small" style="margin-top: 6px; color: #888;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div id="status" class="status"></div>
 
-        <div class="streak-card" id="streak-card">
-            <div class="streak-emoji">🔥</div>
-            <div class="streak-number" id="streak-counter">0</div>
-            <div class="streak-text">дней подряд</div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="card-title">🎯 Цели</div>
-                <div id="goals-container" style="display: none;">
-                    <div id="sleep-goal-card" class="goal-card" style="display: none;">
-                        <div class="goal-header">
-                            <span class="goal-label">🌙 Сон</span>
-                            <span id="sleep-goal-percent" class="goal-percent">—</span>
-                        </div>
-                        <div class="goal-progress">
-                            <div class="goal-progress-bar">
-                                <div id="sleep-goal-fill" class="goal-progress-fill"></div>
-                            </div>
-                        </div>
-                        <div class="goal-text">
-                            <span id="sleep-goal-text">—</span>
-                        </div>
-                    </div>
-                    <div id="weight-goal-card" class="goal-card" style="display: none; margin-top: 12px;">
-                        <div class="goal-header">
-                            <span class="goal-label">⚖️ Вес</span>
-                            <span id="weight-goal-percent" class="goal-percent">—</span>
-                        </div>
-                        <div class="goal-progress">
-                            <div class="goal-progress-bar">
-                                <div id="weight-goal-fill" class="goal-progress-fill"></div>
-                            </div>
-                        </div>
-                        <div class="goal-text">
-                            <span id="weight-goal-text">—</span>
-                        </div>
-                    </div>
-                </div>
-                <div id="no-goals" style="text-align: center; color: #888; padding: 20px;">
-                    <div class="small">Установи цели в ⚙️ Цели</div>
-                </div>
+    <!-- TAB: HOME -->
+    <div id="tab-home" class="tab-panel active">
+      <!-- TODAY SUMMARY -->
+      <div class="card">
+        <div class="card-content">
+          <div class="card-title">📊 Сегодня</div>
+          <div class="today-grid">
+            <div class="today-item sleep-item">
+              <div class="today-label">🌙 Сон</div>
+              <div id="today-sleep-val" class="today-value empty">-</div>
+              <div id="today-sleep-target" class="small"></div>
             </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <div class="card-title">Записать</div>
-                <div class="actions-grid">
-                    <button class="btn-compact" onclick="switchTab('sleep')">🌙 Сон</button>
-                    <button class="btn-compact" onclick="switchTab('weight')">⚖️ Вес</button>
-                    <button class="btn-compact" onclick="switchTab('history')">📈 История</button>
-                    <button class="btn-compact" onclick="switchTab('settings')">⚙️ Цели</button>
-                </div>
+            <div class="today-item weight-item">
+              <div class="today-label">⚖️ Вес</div>
+              <div id="today-weight-val" class="today-value empty">-</div>
+              <div id="today-weight-target" class="small"></div>
             </div>
+          </div>
         </div>
+      </div>
+
+      <!-- STREAK -->
+      <div class="streak-card" id="streak-card">
+        <div class="streak-emoji">🔥</div>
+        <div class="streak-number" id="streak-counter">0</div>
+        <div class="streak-text">дней подряд</div>
+      </div>
+
+      <!-- GOALS -->
+      <div class="card">
+        <div class="card-content">
+          <div class="card-title">🎯 Цели</div>
+          <div id="goals-container" style="display: none;">
+            <!-- Sleep Goal -->
+            <div id="sleep-goal-card" class="goal-card sleep-goal" style="display: none; margin-bottom: 12px;">
+              <div class="goal-header">
+                <span class="goal-label">🌙 Сон</span>
+                <span class="goal-status-icon" id="sleep-goal-status">📊</span>
+              </div>
+              <div class="goal-progress">
+                <div class="goal-progress-bar">
+                  <div id="sleep-goal-fill" class="goal-progress-fill"></div>
+                </div>
+              </div>
+              <div class="goal-percent" id="sleep-goal-percent">0%</div>
+              <div class="goal-text"><span id="sleep-goal-text">-</span></div>
+            </div>
+
+            <!-- Weight Goal -->
+            <div id="weight-goal-card" class="goal-card weight-goal" style="display: none;">
+              <div class="goal-header">
+                <span class="goal-label">⚖️ Вес</span>
+                <span class="goal-status-icon" id="weight-goal-status">📊</span>
+              </div>
+              <div class="goal-progress">
+                <div class="goal-progress-bar">
+                  <div id="weight-goal-fill" class="goal-progress-fill"></div>
+                </div>
+              </div>
+              <div class="goal-percent" id="weight-goal-percent">0%</div>
+              <div class="goal-text"><span id="weight-goal-text">-</span></div>
+            </div>
+          </div>
+          <div id="no-goals" style="text-align: center; color: #888; padding: 20px;">
+            <div class="small">Установи цели в ⚙️ Цели</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="card">
+        <div class="card-content">
+          <div class="actions-grid">
+            <button class="btn-compact" onclick="switchTab('sleep')">🌙 Записать сон</button>
+            <button class="btn-compact" onclick="switchTab('weight')">⚖️ Записать вес</button>
+            <button class="btn-compact" onclick="switchTab('history')">📈 История</button>
+            <button class="btn-compact" onclick="switchTab('settings')">⚙️ Цели</button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- БЛОК СНА -->
-    <div class="tab-panel" id="tab-sleep" style="display:none;">
-        <div class="card">
-            <div class="card-content">
-                <div class="card-title">🌙 Трекер сна</div>
+    <!-- TAB: SLEEP -->
+    <div id="tab-sleep" class="tab-panel" style="display: none;">
+      <div class="card">
+        <div class="card-content">
+          <div class="card-title">🌙 Трекер сна</div>
 
-                <div class="field">
-                    <label for="sleep-date">Дата</label>
-                    <input type="date" id="sleep-date" />
-                </div>
+          <div class="field">
+            <label for="sleep-date">Дата</label>
+            <input type="date" id="sleep-date">
+          </div>
 
-                <div class="field">
-                    <label for="sleep-start">⏰ Время засыпания</label>
-                    <input type="time" id="sleep-start" />
-                </div>
+          <div class="field">
+            <label for="sleep-start">⏰ Время засыпания</label>
+            <input type="time" id="sleep-start">
+          </div>
 
-                <div class="field">
-                    <label for="sleep-end">⏰ Время пробуждения</label>
-                    <input type="time" id="sleep-end" />
-                </div>
+          <div class="field">
+            <label for="sleep-end">⏰ Время пробуждения</label>
+            <input type="time" id="sleep-end">
+          </div>
 
-                <div id="sleep-calc" style="display:none;">
-                    <div class="calc-result">
-                        <div class="calc-result-label">Продолжительность</div>
-                        <div class="calc-result-value" id="sleep-hours-calc">—</div>
-                        <div class="calc-result-label" style="margin-top: 10px;">Качество</div>
-                        <div class="calc-result-value" id="sleep-quality-calc">—</div>
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label for="sleep-notes">Заметки</label>
-                    <textarea id="sleep-notes" placeholder="Как спал..."></textarea>
-                </div>
-
-                <button class="btn-primary" id="btn-save-sleep">Сохранить</button>
+          <!-- Inline Calculator -->
+          <div id="sleep-calc" style="display: none;">
+            <div class="sleep-calc-inline">
+              <div class="calc-row">
+                <span class="calc-label">Продолжительность</span>
+                <span class="calc-value" id="sleep-hours-calc">-</span>
+              </div>
+              <div class="calc-row">
+                <span class="calc-label">Качество (1-10)</span>
+                <span class="calc-value" id="sleep-quality-calc">-</span>
+              </div>
             </div>
+          </div>
+
+          <div class="field">
+            <label for="sleep-notes">Заметки (опционально)</label>
+            <textarea id="sleep-notes" placeholder="Как спалось? Были ли проблемы?"></textarea>
+          </div>
+
+          <button class="btn-primary" id="btn-save-sleep">Сохранить сон</button>
         </div>
+      </div>
     </div>
 
-    <!-- БЛОК ВЕСА -->
-    <div class="tab-panel" id="tab-weight" style="display:none;">
-        <div class="card">
-            <div class="card-content">
-                <div class="card-title">⚖️ Трекер веса</div>
+    <!-- TAB: WEIGHT -->
+    <div id="tab-weight" class="tab-panel" style="display: none;">
+      <div class="card">
+        <div class="card-content">
+          <div class="card-title">⚖️ Трекер веса</div>
 
-                <div class="field">
-                    <label for="weight-date">Дата</label>
-                    <input type="date" id="weight-date" />
-                </div>
+          <div class="field">
+            <label for="weight-date">Дата</label>
+            <input type="date" id="weight-date">
+          </div>
 
-                <div class="field">
-                    <label for="weight-value">Вес (кг)</label>
-                    <input type="number" id="weight-value" min="0" max="300" step="0.1" placeholder="72.4" />
-                </div>
+          <div class="field">
+            <label for="weight-value">Вес (кг)</label>
+            <input type="number" id="weight-value" min="0" max="300" step="0.1" placeholder="72.4">
+          </div>
 
-                <div class="field">
-                    <label for="weight-notes">Заметки</label>
-                    <textarea id="weight-notes" placeholder="Комментарий..."></textarea>
-                </div>
+          <div class="field">
+            <label for="weight-notes">Заметки (опционально)</label>
+            <textarea id="weight-notes" placeholder="Время взвешивания, состояние..."></textarea>
+          </div>
 
-                <button class="btn-primary" id="btn-save-weight">Сохранить</button>
-            </div>
+          <button class="btn-primary" id="btn-save-weight">Сохранить вес</button>
         </div>
+      </div>
     </div>
 
-    <!-- БЛОК ИСТОРИИ -->
-    <div class="tab-panel" id="tab-history" style="display:none;">
-        <div class="card">
-            <div class="card-content">
-                <div class="card-title">📈 История</div>
-                
-                <!-- ГРАФИКИ -->
-                <div id="charts-container">
-                    <div class="chart-wrapper">
-                        <div class="chart-label">🌙 Сон (часы)</div>
-                        <div class="chart-container">
-                            <canvas id="sleepChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-wrapper">
-                        <div class="chart-label">⚖️ Вес (кг)</div>
-                        <div class="chart-container">
-                            <canvas id="weightChart"></canvas>
-                        </div>
-                    </div>
-                </div>
+    <!-- TAB: HISTORY -->
+    <div id="tab-history" class="tab-panel" style="display: none;">
+      <div class="card">
+        <div class="card-content">
+          <div class="card-title">📈 История</div>
 
-                <!-- ИСТОРИЯ КАРТОЧКАМИ -->
-                <div style="border-top: 1px solid rgba(124, 58, 237, 0.15); padding-top: 12px; margin-top: -4px;">
-                    <div id="history-days"></div>
-                </div>
+          <!-- Sleep Stats Filter -->
+          <div style="margin-bottom: 16px;">
+            <div class="card-title" style="margin: 0 0 10px 0; font-size: 13px;">🌙 Сон (часы)</div>
+            <div class="stats-filter">
+              <button class="stats-filter-btn active" onclick="filterSleepStats('week')">За неделю</button>
+              <button class="stats-filter-btn" onclick="filterSleepStats('month')">За месяц</button>
             </div>
+            <div class="stats-value">
+              Среднее: <span id="sleep-avg-value">-</span> часов
+            </div>
+          </div>
+
+          <!-- Sleep Chart -->
+          <div class="chart-wrapper">
+            <div class="chart-container">
+              <canvas id="sleepChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Weight Stats Filter -->
+          <div style="margin-bottom: 16px; margin-top: 20px;">
+            <div class="card-title" style="margin: 0 0 10px 0; font-size: 13px;">⚖️ Вес (кг)</div>
+            <div class="stats-filter">
+              <button class="stats-filter-btn active" onclick="filterWeightStats('week')">За неделю</button>
+              <button class="stats-filter-btn" onclick="filterWeightStats('month')">За месяц</button>
+            </div>
+            <div class="stats-value">
+              Среднее: <span id="weight-avg-value">-</span> кг
+            </div>
+          </div>
+
+          <!-- Weight Chart -->
+          <div class="chart-wrapper">
+            <div class="chart-container">
+              <canvas id="weightChart"></canvas>
+            </div>
+          </div>
+
+          <!-- History Days -->
+          <div style="border-top: 1px solid rgba(124, 58, 237, 0.15); padding-top: 12px; margin-top: -4px;">
+            <div id="history-days"></div>
+          </div>
         </div>
+      </div>
     </div>
 
-    <!-- БЛОК НАСТРОЕК/ЦЕЛЕЙ -->
-    <div class="tab-panel" id="tab-settings" style="display:none;">
-        <div class="card">
-            <div class="card-content">
-                <div class="card-title">⚙️ Цели и настройки</div>
+    <!-- TAB: SETTINGS -->
+    <div id="tab-settings" class="tab-panel" style="display: none;">
+      <div class="card">
+        <div class="card-content">
+          <div class="card-title">⚙️ Цели и настройки</div>
 
-                <div class="field">
-                    <label for="target-weight">Целевой вес (кг)</label>
-                    <input type="number" id="target-weight" min="0" max="300" step="0.1" placeholder="75.0" />
-                </div>
+          <div class="field">
+            <label for="target-weight">Целевой вес (кг)</label>
+            <input type="number" id="target-weight" min="0" max="300" step="0.1" placeholder="75.0">
+          </div>
 
-                <div class="field">
-                    <label for="target-sleep">Целевой сон (часов)</label>
-                    <input type="number" id="target-sleep" min="1" max="12" step="0.5" placeholder="8" />
-                </div>
+          <div class="field">
+            <label for="target-sleep">Целевой сон (часов)</label>
+            <input type="number" id="target-sleep" min="1" max="12" step="0.5" placeholder="8">
+          </div>
 
-                <button class="btn-primary" id="btn-save-settings">Сохранить цели</button>
-            </div>
+          <button class="btn-primary" id="btn-save-settings">Сохранить цели</button>
         </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- НИЖНЯЯ НАВИГАЦИЯ -->
-<div class="nav-bottom">
-    <div class="nav-item active" data-tab="home" onclick="navClick(this)">✨</div>
+  <!-- BOTTOM NAVIGATION -->
+  <div class="nav-bottom">
+    <div class="nav-item active" data-tab="home" onclick="navClick(this)">📊</div>
     <div class="nav-item" data-tab="sleep" onclick="navClick(this)">🌙</div>
     <div class="nav-item" data-tab="weight" onclick="navClick(this)">⚖️</div>
     <div class="nav-item" data-tab="history" onclick="navClick(this)">📈</div>
     <div class="nav-item" data-tab="settings" onclick="navClick(this)">⚙️</div>
-</div>
+  </div>
 
-<script>
+  <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
     let telegramId = null;
     let sleepChartInstance = null;
     let weightChartInstance = null;
+    let currentSleepFilter = 'week';
+    let currentWeightFilter = 'week';
 
-    function setStatus(msg, type = '', duration = 3000) {
-        const el = document.getElementById('status');
-        el.textContent = msg;
-        el.className = 'status ' + (type || '');
-        el.classList.remove('hide-status');
+    // ============ HELPERS ============
 
-        if (type === 'ok' || type === 'err') {
-            setTimeout(() => {
-                el.classList.add('hide-status');
-            }, duration);
-        }
+    function setStatus(msg, type = 'ok', duration = 3000) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = `status ${type}`;
+      el.classList.remove('hide-status');
+      if (type === 'ok' || type === 'err') {
+        setTimeout(() => el.classList.add('hide-status'), duration);
+      }
     }
 
     function showGreeting(text) {
-        const status = document.getElementById('status');
-        const title = document.getElementById('aura-title');
-
-        status.textContent = text;
-        status.className = 'status ok';
-        title.classList.remove('title-visible');
-
-        setTimeout(() => {
-            status.classList.add('hide-status');
-            title.classList.add('title-visible');
-        }, 2500);
-    }
-
-    function initUser() {
-        try {
-            const user = tg.initDataUnsafe?.user;
-            if (!user) {
-                setStatus('Ошибка при загрузке', 'err');
-                return;
-            }
-            telegramId = user.id;
-
-            const name = user.first_name || 'друже';
-            const hour = new Date().getHours();
-            let greet;
-            if (hour >= 5 && hour < 12) greet = 'Доброе утро';
-            else if (hour >= 12 && hour < 18) greet = 'Добрый день';
-            else if (hour >= 18 && hour < 23) greet = 'Добрый вечер';
-            else greet = 'Доброй ночи';
-
-            showGreeting(`${greet}, ${name}! ✨`);
-
-            loadTodaySummary();
-        } catch (e) {
-            console.error(e);
-            setStatus('Ошибка инициализации', 'err');
-        }
+      const status = document.getElementById('status');
+      const title = document.getElementById('aura-title');
+      status.textContent = text;
+      status.className = 'status ok';
+      title.classList.remove('title-visible');
+      setTimeout(() => {
+        status.classList.add('hide-status');
+        title.classList.add('title-visible');
+      }, 2500);
     }
 
     function isoDateToday() {
-        const d = new Date();
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
 
     function switchTab(name) {
-        document.querySelectorAll('.tab-panel').forEach(p => {
-            p.style.display = 'none';
-        });
-        document.getElementById('tab-' + name).style.display = 'block';
+      document.querySelectorAll('.tab-panel').forEach(p => (p.style.display = 'none'));
+      document.getElementById(`tab-${name}`).style.display = 'block';
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelector(`[data-tab="${name}"]`).classList.add('active');
 
-        document.querySelectorAll('.nav-item').forEach(n => {
-            n.classList.remove('active');
-        });
-        document.querySelector(`[data-tab="${name}"]`).classList.add('active');
-
-        if (name === 'history') {
-            loadHistory();
-        }
+      if (name === 'history') {
+        loadHistory();
+      }
     }
 
     function navClick(el) {
-        const tabName = el.getAttribute('data-tab');
-        switchTab(tabName);
+      const tabName = el.getAttribute('data-tab');
+      switchTab(tabName);
     }
 
     async function postJson(path, body) {
-        const res = await fetch(path, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        return res.json();
+      const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return res.json();
     }
 
-    async function loadStreak() {
-        if (!telegramId) return;
-        try {
-            const res = await fetch(`/api/streak/${telegramId}`);
-            const data = await res.json();
-            
-            if (data.ok) {
-                const streakEl = document.getElementById('streak-counter');
-                streakEl.textContent = data.streak;
-                
-                if (data.streak > 0) {
-                    streakEl.classList.add('active');
-                    setTimeout(() => {
-                        streakEl.classList.remove('active');
-                    }, 1000);
-                }
-            }
-        } catch (err) {
-            console.error('loadStreak error:', err);
+    // ============ INITIALIZATION ============
+
+    async function initUser() {
+      try {
+        const user = tg.initDataUnsafe?.user;
+        if (!user) {
+          setStatus('⚠️ Не получилось загрузить профиль', 'err');
+          return;
         }
+
+        telegramId = user.id;
+        const name = user.first_name;
+        const hour = new Date().getHours();
+
+        let greet = '';
+        if (hour >= 5 && hour < 12) {
+          greet = '☀️ Доброе утро';
+        } else if (hour >= 12 && hour < 18) {
+          greet = '🌤️ Добрый день';
+        } else if (hour >= 18 && hour < 23) {
+          greet = '🌙 Добрый вечер';
+        } else {
+          greet = '🌌 Ночь на дворе';
+        }
+
+        showGreeting(`${greet}, ${name}!`);
+        loadTodaySummary();
+      } catch (e) {
+        console.error(e);
+        setStatus('⚠️ Ошибка при загрузке профиля', 'err');
+      }
+    }
+
+    // ============ LOAD DATA ============
+
+    async function loadStreak() {
+      if (!telegramId) return;
+      try {
+        const res = await fetch(`/api/streak/${telegramId}`);
+        const data = await res.json();
+        if (data.ok) {
+          const streakEl = document.getElementById('streak-counter');
+          streakEl.textContent = data.streak;
+          if (data.streak > 0) {
+            streakEl.classList.add('active');
+            setTimeout(() => streakEl.classList.remove('active'), 1000);
+          }
+        }
+      } catch (err) {
+        console.error('loadStreak error:', err);
+      }
     }
 
     async function loadTodaySummary() {
-        if (!telegramId) return;
-        try {
-            const res = await fetch(`/api/dashboard/${telegramId}`);
-            const json = await res.json();
+      if (!telegramId) return;
 
-            if (!json.ok) return;
+      try {
+        const res = await fetch(`/api/dashboard/${telegramId}`);
+        const json = await res.json();
+        if (!json.ok) return;
 
-            const today = isoDateToday();
-            const todaySleep = json.sleep?.find(s => s.date === today);
-            const todayWeight = json.weight?.find(w => w.date === today);
-            const targetWeight = json.user?.target_weight_kg;
-            const targetSleep = json.user?.target_sleep_hours;
+        const today = isoDateToday();
+        const todaySleep = json.sleep?.find(s => s.date === today);
+        const todayWeight = json.weight?.find(w => w.date === today);
+        const targetWeight = json.user?.target_weight_kg;
+        const targetSleep = json.user?.target_sleep_hours;
 
-            const sleepVal = document.getElementById('today-sleep-val');
-            const weightVal = document.getElementById('today-weight-val');
-            const sleepTarget = document.getElementById('today-sleep-target');
-            const weightTarget = document.getElementById('today-weight-target');
-            const goalsContainer = document.getElementById('goals-container');
-            const noGoals = document.getElementById('no-goals');
-            const sleepGoalCard = document.getElementById('sleep-goal-card');
-            const weightGoalCard = document.getElementById('weight-goal-card');
+        const sleepVal = document.getElementById('today-sleep-val');
+        const weightVal = document.getElementById('today-weight-val');
+        const sleepTarget = document.getElementById('today-sleep-target');
+        const weightTarget = document.getElementById('today-weight-target');
+        const goalsContainer = document.getElementById('goals-container');
+        const noGoals = document.getElementById('no-goals');
+        const sleepGoalCard = document.getElementById('sleep-goal-card');
+        const weightGoalCard = document.getElementById('weight-goal-card');
 
-            if (todaySleep) {
-                const hours = todaySleep.hours_slept;
-                sleepVal.textContent = `${hours}ч сна`;
-                sleepVal.classList.remove('empty');
-            }
-
-            if (todayWeight) {
-                let weightText = `${todayWeight.weight_kg}кг`;
-                weightVal.textContent = weightText;
-                weightVal.classList.remove('empty');
-            }
-
-            let hasGoals = false;
-
-            if (targetSleep) {
-                hasGoals = true;
-                sleepGoalCard.style.display = 'block';
-                if (todaySleep) {
-                    const percent = Math.min(100, Math.round((todaySleep.hours_slept / targetSleep) * 100));
-                    document.getElementById('sleep-goal-fill').style.width = percent + '%';
-                    document.getElementById('sleep-goal-percent').textContent = percent + '%';
-                    document.getElementById('sleep-goal-text').textContent = `${todaySleep.hours_slept} / ${targetSleep} ч`;
-                    sleepTarget.textContent = `Цель: ${targetSleep}ч`;
-                } else {
-                    document.getElementById('sleep-goal-fill').style.width = '0%';
-                    document.getElementById('sleep-goal-percent').textContent = '0%';
-                    document.getElementById('sleep-goal-text').textContent = `0 / ${targetSleep} ч`;
-                    sleepTarget.textContent = `Цель: ${targetSleep}ч`;
-                }
-            } else {
-                sleepGoalCard.style.display = 'none';
-            }
-
-            if (targetWeight) {
-                hasGoals = true;
-                weightGoalCard.style.display = 'block';
-                if (todayWeight) {
-                    const diff = targetWeight - todayWeight.weight_kg;
-                    const percent = Math.min(100, Math.max(0, Math.round((Math.max(0, diff) / Math.max(0.1, Math.abs(targetWeight - 50))) * 100)));
-                    document.getElementById('weight-goal-fill').style.width = percent + '%';
-                    document.getElementById('weight-goal-percent').textContent = (Math.abs(diff)).toFixed(1) + 'кг';
-                    if (diff > 0) {
-                        document.getElementById('weight-goal-text').textContent = `${todayWeight.weight_kg} → ${targetWeight}кг (−${diff.toFixed(1)}кг)`;
-                    } else if (diff < 0) {
-                        document.getElementById('weight-goal-text').textContent = `${todayWeight.weight_kg} → ${targetWeight}кг (+${Math.abs(diff).toFixed(1)}кг)`;
-                    } else {
-                        document.getElementById('weight-goal-text').textContent = `${todayWeight.weight_kg}кг — ЦЕЛЬ! 🎉`;
-                    }
-                    weightTarget.textContent = `Цель: ${targetWeight}кг`;
-                } else {
-                    document.getElementById('weight-goal-fill').style.width = '0%';
-                    document.getElementById('weight-goal-percent').textContent = '—';
-                    document.getElementById('weight-goal-text').textContent = `0 → ${targetWeight}кг`;
-                    weightTarget.textContent = `Цель: ${targetWeight}кг`;
-                }
-            } else {
-                weightGoalCard.style.display = 'none';
-            }
-
-            if (hasGoals) {
-                goalsContainer.style.display = 'block';
-                noGoals.style.display = 'none';
-            } else {
-                goalsContainer.style.display = 'none';
-                noGoals.style.display = 'block';
-            }
-
-            if (targetWeight) {
-                document.getElementById('target-weight').value = targetWeight;
-            }
-            if (targetSleep) {
-                document.getElementById('target-sleep').value = targetSleep;
-            }
-
-            loadStreak();
-        } catch (e) {
-            console.error('loadTodaySummary error:', e);
+        if (todaySleep) {
+          const hours = todaySleep.hours_slept;
+          sleepVal.textContent = `${hours}ч`;
+          sleepVal.classList.remove('empty');
         }
+
+        if (todayWeight) {
+          let weightText = `${todayWeight.weight_kg}кг`;
+          weightVal.textContent = weightText;
+          weightVal.classList.remove('empty');
+        }
+
+        let hasGoals = false;
+
+        if (targetSleep) {
+          hasGoals = true;
+          sleepGoalCard.style.display = 'block';
+          if (todaySleep) {
+            const percent = Math.min(100, Math.round((todaySleep.hours_slept / targetSleep) * 100));
+            const statusEl = document.getElementById('sleep-goal-status');
+
+            if (percent >= 100) statusEl.textContent = '✅';
+            else if (percent >= 75) statusEl.textContent = '📈';
+            else statusEl.textContent = '⏳';
+
+            document.getElementById('sleep-goal-fill').style.width = `${percent}%`;
+            document.getElementById('sleep-goal-percent').textContent = `${percent}%`;
+            document.getElementById('sleep-goal-text').textContent = `${todaySleep.hours_slept}/${targetSleep}ч`;
+            sleepTarget.textContent = `Цель: ${targetSleep}ч`;
+          } else {
+            document.getElementById('sleep-goal-fill').style.width = '0%';
+            document.getElementById('sleep-goal-percent').textContent = '0%';
+            document.getElementById('sleep-goal-text').textContent = `0/${targetSleep}ч`;
+            sleepTarget.textContent = `Цель: ${targetSleep}ч`;
+          }
+        } else {
+          sleepGoalCard.style.display = 'none';
+        }
+
+        if (targetWeight) {
+          hasGoals = true;
+          weightGoalCard.style.display = 'block';
+          if (todayWeight) {
+            const diff = targetWeight - todayWeight.weight_kg;
+            const percent = Math.min(100, Math.max(0, Math.round(Math.max(0, diff) / Math.max(0.1, Math.abs(targetWeight - 50)) * 100)));
+            const statusEl = document.getElementById('weight-goal-status');
+
+            if (Math.abs(diff) <= 0.5) statusEl.textContent = '✅';
+            else if (diff > 0) statusEl.textContent = '📉';
+            else statusEl.textContent = '📈';
+
+            document.getElementById('weight-goal-fill').style.width = `${percent}%`;
+            document.getElementById('weight-goal-percent').textContent = Math.abs(diff).toFixed(1);
+
+            if (diff > 0) {
+              document.getElementById('weight-goal-text').textContent = `${todayWeight.weight_kg}кг (${diff.toFixed(1)}кг до цели)`;
+            } else if (diff < 0) {
+              document.getElementById('weight-goal-text').textContent = `${todayWeight.weight_kg}кг (${Math.abs(diff).toFixed(1)}кг выше)`;
+            } else {
+              document.getElementById('weight-goal-text').textContent = `${todayWeight.weight_kg}кг - цель достигнута!`;
+            }
+
+            weightTarget.textContent = `Цель: ${targetWeight}кг`;
+          } else {
+            document.getElementById('weight-goal-fill').style.width = '0%';
+            document.getElementById('weight-goal-percent').textContent = '—';
+            document.getElementById('weight-goal-text').textContent = `Нет данных`;
+            weightTarget.textContent = `Цель: ${targetWeight}кг`;
+          }
+        } else {
+          weightGoalCard.style.display = 'none';
+        }
+
+        if (hasGoals) {
+          goalsContainer.style.display = 'block';
+          noGoals.style.display = 'none';
+        } else {
+          goalsContainer.style.display = 'none';
+          noGoals.style.display = 'block';
+        }
+
+        if (targetWeight) document.getElementById('target-weight').value = targetWeight;
+        if (targetSleep) document.getElementById('target-sleep').value = targetSleep;
+
+        loadStreak();
+      } catch (e) {
+        console.error('loadTodaySummary error:', e);
+      }
     }
 
     async function loadHistory() {
-        if (!telegramId) return;
-        try {
-            const res = await fetch(`/api/dashboard/${telegramId}`);
-            const json = await res.json();
+      if (!telegramId) return;
 
-            if (!json.ok) return;
+      try {
+        const res = await fetch(`/api/dashboard/${telegramId}`);
+        const json = await res.json();
+        if (!json.ok) return;
 
-            const historyContainer = document.getElementById('history-days');
-            historyContainer.innerHTML = '';
+        const historyContainer = document.getElementById('history-days');
+        historyContainer.innerHTML = '';
 
-            const sleep = json.sleep || [];
-            const weight = json.weight || [];
+        const sleep = json.sleep || [];
+        const weight = json.weight || [];
 
-            if (sleep.length === 0 && weight.length === 0) {
-                historyContainer.innerHTML = '<div class="small">Пока нет данных за последние 7 дней</div>';
-                renderSleepChart([], []);
-                renderWeightChart([], []);
-                return;
-            }
-
-            // Графики
-            if (sleep.length >= 1) {
-                const sortedSleep = [...sleep].reverse();
-                const sleepDates = sortedSleep.map(s => s.date.slice(5));
-                const sleepHours = sortedSleep.map(s => s.hours_slept);
-                renderSleepChart(sleepDates, sleepHours);
-            } else {
-                renderSleepChart([], []);
-            }
-
-            if (weight.length >= 1) {
-                const sortedWeight = [...weight].reverse();
-                const weightDates = sortedWeight.map(w => w.date.slice(5));
-                const weightValues = sortedWeight.map(w => w.weight_kg);
-                renderWeightChart(weightDates, weightValues);
-            } else {
-                renderWeightChart([], []);
-            }
-
-            // Рендер карточек по дням
-            renderHistoryCards(historyContainer, sleep, weight);
-        } catch (e) {
-            console.error('loadHistory error:', e);
+        if (sleep.length === 0 && weight.length === 0) {
+          historyContainer.innerHTML = '<div class="small" style="padding: 20px; text-align: center;">Нет данных за 7 дней</div>';
+          renderSleepChart([], []);
+          renderWeightChart([], []);
+          return;
         }
+
+        if (sleep.length > 0) {
+          const sortedSleep = [...sleep].reverse();
+          const sleepDates = sortedSleep.map(s => s.date.slice(5));
+          const sleepHours = sortedSleep.map(s => s.hours_slept);
+          renderSleepChart(sleepDates, sleepHours);
+
+          // Calc average
+          const avg = (sleepHours.reduce((a, b) => a + b, 0) / sleepHours.length).toFixed(1);
+          document.getElementById('sleep-avg-value').textContent = avg;
+        } else {
+          renderSleepChart([], []);
+          document.getElementById('sleep-avg-value').textContent = '—';
+        }
+
+        if (weight.length > 0) {
+          const sortedWeight = [...weight].reverse();
+          const weightDates = sortedWeight.map(w => w.date.slice(5));
+          const weightValues = sortedWeight.map(w => w.weight_kg);
+          renderWeightChart(weightDates, weightValues);
+
+          // Calc average
+          const avg = (weightValues.reduce((a, b) => a + b, 0) / weightValues.length).toFixed(1);
+          document.getElementById('weight-avg-value').textContent = avg;
+        } else {
+          renderWeightChart([], []);
+          document.getElementById('weight-avg-value').textContent = '—';
+        }
+
+        renderHistoryCards(historyContainer, sleep, weight);
+      } catch (e) {
+        console.error('loadHistory error:', e);
+      }
     }
 
-        function renderHistoryCards(container, sleepLogs, weightLogs) {
-        const byDate = {};
+    function renderHistoryCards(container, sleepLogs, weightLogs) {
+      const byDate = {};
 
-        sleepLogs.forEach(item => {
-            if (!byDate[item.date]) byDate[item.date] = {};
-            byDate[item.date].sleep = item;
-        });
+      sleepLogs.forEach(item => {
+        if (!byDate[item.date]) byDate[item.date] = {};
+        byDate[item.date].sleep = item;
+      });
 
-        weightLogs.forEach(item => {
-            if (!byDate[item.date]) byDate[item.date] = {};
-            if (!byDate[item.date].weight) byDate[item.date].weight = [];
-            byDate[item.date].weight.push(item);
-        });
+      weightLogs.forEach(item => {
+        if (!byDate[item.date]) byDate[item.date] = {};
+        if (!byDate[item.date].weight) byDate[item.date].weight = [];
+        byDate[item.date].weight.push(item);
+      });
 
-        const dates = Object.keys(byDate).sort((a, b) => new Date(b) - new Date(a));
+      const dates = Object.keys(byDate).sort((a, b) => new Date(b) - new Date(a));
 
-        dates.forEach(date => {
-            const day = byDate[date];
-            const card = document.createElement('div');
-            card.className = 'history-day-card';
+      dates.forEach(date => {
+        const day = byDate[date];
+        const card = document.createElement('div');
+        card.className = 'history-day-card';
 
-            const header = document.createElement('div');
-            header.className = 'history-day-header';
-            header.innerHTML = `
-                <div class="history-day-date">📅 ${date}</div>
-            `;
-            card.appendChild(header);
+        const header = document.createElement('div');
+        header.className = 'history-day-header';
+        header.innerHTML = `<div class="history-day-date">${date}</div>`;
+        card.appendChild(header);
 
-            if (day.sleep) {
-                const s = day.sleep;
-                const row = document.createElement('div');
-                row.className = 'history-row';
-                const timePart = (s.sleep_start && s.sleep_end)
-                    ? `${s.sleep_start}–${s.sleep_end}`
-                    : 'время не указано';
+        if (day.sleep) {
+          const s = day.sleep;
+          const timePart = s.sleep_start && s.sleep_end ? `${s.sleep_start}-${s.sleep_end}` : '—';
+          const row = document.createElement('div');
+          row.className = 'history-row';
+          row.innerHTML = `
+            <div class="history-label">
+              <span class="icon">🌙</span>
+              <div>
+                <div class="history-main">${s.hours_slept}ч</div>
+                <div class="history-sub">Качество ${s.quality_rating}/10</div>
+              </div>
+            </div>
+            <div class="history-sub">${timePart}</div>
+          `;
+          card.appendChild(row);
+        }
 
-                row.innerHTML = `
-                    <div class="history-label">
-                        <span class="icon">🌙</span>
-                        <div>
-                            <div class="history-main">${s.hours_slept}ч сна</div>
-                            <div class="history-sub">${timePart}, качество ${s.quality_rating}/10</div>
-                        </div>
-                    </div>
-                `;
-                card.appendChild(row);
-            }
+        if (day.weight) {
+          if (Array.isArray(day.weight)) {
+            day.weight.forEach(w => {
+              const created = w.created_at ? new Date(w.created_at) : null;
+              const timeStr = created ? created.toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit' }) : '—';
+              const row = document.createElement('div');
+              row.className = 'history-row';
+              row.innerHTML = `
+                <div class="history-label">
+                  <span class="icon">⚖️</span>
+                  <div class="history-main">${w.weight_kg}кг</div>
+                </div>
+                <div class="history-sub">${timeStr}</div>
+              `;
+              card.appendChild(row);
+            });
+          }
+        }
 
-            // НЕСКОЛЬКО ВЕСОВ В ДЕНЬ с временем записи
-            if (day.weight && Array.isArray(day.weight)) {
-                day.weight.forEach(w => {
-                    const created = w.created_at ? new Date(w.created_at) : null;
-                    const timeStr = created
-                        ? created.toLocaleTimeString('ru-RU', {
-                            timeZone: 'Europe/Moscow',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })
-                        : 'время не указано';
-
-                    const row = document.createElement('div');
-                    row.className = 'history-row';
-                    row.innerHTML = `
-                        <div class="history-label">
-                            <span class="icon">⚖️</span>
-                            <div>
-                                <div class="history-main">${w.weight_kg}кг</div>
-                                <div class="history-sub">Запись в ${timeStr}</div>
-                            </div>
-                        </div>
-                    `;
-                    card.appendChild(row);
-                });
-            }
-
-            container.appendChild(card);
-        });
+        container.appendChild(card);
+      });
     }
 
+    // ============ CHARTS ============
 
     function renderSleepChart(dates, hours) {
-        const ctx = document.getElementById('sleepChart');
-        
-        if (sleepChartInstance) {
-            sleepChartInstance.destroy();
-        }
+      const ctx = document.getElementById('sleepChart');
+      if (sleepChartInstance) sleepChartInstance.destroy();
 
-        sleepChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: dates,
-                datasets: [{
-                    label: 'Часы сна',
-                    data: hours,
-                    backgroundColor: [
-                        'rgba(124, 58, 237, 0.8)',
-                        'rgba(124, 58, 237, 0.7)',
-                        'rgba(124, 58, 237, 0.6)',
-                        'rgba(124, 58, 237, 0.7)',
-                        'rgba(124, 58, 237, 0.8)',
-                        'rgba(124, 58, 237, 0.75)',
-                        'rgba(124, 58, 237, 0.85)'
-                    ],
-                    borderColor: '#7c3aed',
-                    borderWidth: 0,
-                    borderRadius: 8
-                }]
+      sleepChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: '',
+              data: hours,
+              backgroundColor: [
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(59, 130, 246, 0.7)',
+                'rgba(59, 130, 246, 0.6)',
+                'rgba(59, 130, 246, 0.7)',
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(59, 130, 246, 0.75)',
+                'rgba(59, 130, 246, 0.85)',
+              ],
+              borderColor: '#3b82f6',
+              borderWidth: 0,
+              borderRadius: 8,
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(15, 52, 96, 0.8)',
-                        titleColor: '#7c3aed',
-                        bodyColor: '#e0e0e0',
-                        borderColor: '#7c3aed',
-                        borderWidth: 1,
-                        titleFont: { size: 12, weight: 'bold' },
-                        bodyFont: { size: 12 },
-                        padding: 8,
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) {
-                                return context.parsed.y + ' ч';
-                            }
-                        }
-                    }
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 52, 96, 0.8)',
+              titleColor: '#3b82f6',
+              bodyColor: '#e0e0e0',
+              borderColor: '#3b82f6',
+              borderWidth: 1,
+              titleFont: { size: 12, weight: 'bold' },
+              bodyFont: { size: 12 },
+              padding: 8,
+              displayColors: false,
+              callbacks: {
+                label: function (context) {
+                  return `${context.parsed.y}ч`;
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 12,
-                        grid: {
-                            color: 'rgba(124, 58, 237, 0.1)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#aaa',
-                            font: { size: 11 },
-                            stepSize: 3
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false,
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#aaa',
-                            font: { size: 10 }
-                        }
-                    }
-                }
-            }
-        });
+              },
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 12,
+              grid: { color: 'rgba(59, 130, 246, 0.1)', drawBorder: false },
+              ticks: { color: '#aaa', font: { size: 11 }, stepSize: 3 },
+            },
+            x: {
+              grid: { display: false, drawBorder: false },
+              ticks: { color: '#aaa', font: { size: 10 } },
+            },
+          },
+        },
+      });
     }
 
     function renderWeightChart(dates, weights) {
-        const ctx = document.getElementById('weightChart');
-        
-        if (weightChartInstance) {
-            weightChartInstance.destroy();
-        }
+      const ctx = document.getElementById('weightChart');
+      if (weightChartInstance) weightChartInstance.destroy();
 
-        weightChartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [{
-                    label: 'Вес (кг)',
-                    data: weights,
-                    borderColor: '#06b6d4',
-                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                    borderWidth: 2.5,
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    pointBackgroundColor: '#06b6d4',
-                    pointBorderColor: '#0a0e27',
-                    pointBorderWidth: 2
-                }]
+      weightChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: '',
+              data: weights,
+              borderColor: '#06b6d4',
+              backgroundColor: 'rgba(6, 182, 212, 0.1)',
+              borderWidth: 2.5,
+              tension: 0.4,
+              fill: true,
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              pointBackgroundColor: '#06b6d4',
+              pointBorderColor: '#0a0e27',
+              pointBorderWidth: 2,
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(15, 52, 96, 0.8)',
-                        titleColor: '#06b6d4',
-                        bodyColor: '#e0e0e0',
-                        borderColor: '#06b6d4',
-                        borderWidth: 1,
-                        titleFont: { size: 12, weight: 'bold' },
-                        bodyFont: { size: 12 },
-                        padding: 8,
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) {
-                                return context.parsed.y.toFixed(1) + ' кг';
-                            }
-                        }
-                    }
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 52, 96, 0.8)',
+              titleColor: '#06b6d4',
+              bodyColor: '#e0e0e0',
+              borderColor: '#06b6d4',
+              borderWidth: 1,
+              titleFont: { size: 12, weight: 'bold' },
+              bodyFont: { size: 12 },
+              padding: 8,
+              displayColors: false,
+              callbacks: {
+                label: function (context) {
+                  return `${context.parsed.y.toFixed(1)}кг`;
                 },
-                scales: {
-                    y: {
-                        grid: {
-                            color: 'rgba(124, 58, 237, 0.1)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#aaa',
-                            font: { size: 11 }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false,
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#aaa',
-                            font: { size: 10 }
-                        }
-                    }
-                }
-            }
-        });
+              },
+            },
+          },
+          scales: {
+            y: {
+              grid: { color: 'rgba(59, 130, 246, 0.1)', drawBorder: false },
+              ticks: { color: '#aaa', font: { size: 11 } },
+            },
+            x: {
+              grid: { display: false, drawBorder: false },
+              ticks: { color: '#aaa', font: { size: 10 } },
+            },
+          },
+        },
+      });
     }
 
+    // ============ FILTERS ============
+
+    function filterSleepStats(period) {
+      currentSleepFilter = period;
+      document.querySelectorAll(`[onclick*="filterSleepStats"]`).forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      // По факту мы уже берем последние 7 дней, месячный вид сделаем если понадобится
+    }
+
+    function filterWeightStats(period) {
+      currentWeightFilter = period;
+      document.querySelectorAll(`[onclick*="filterWeightStats"]`).forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    // ============ SLEEP FORM ============
+
     function calcSleep() {
-        const start = document.getElementById('sleep-start').value;
-        const end = document.getElementById('sleep-end').value;
+      const start = document.getElementById('sleep-start').value;
+      const end = document.getElementById('sleep-end').value;
 
-        if (!start || !end) {
-            document.getElementById('sleep-calc').style.display = 'none';
-            return;
-        }
+      if (!start || !end) {
+        document.getElementById('sleep-calc').style.display = 'none';
+        return;
+      }
 
-        const [startH, startM] = start.split(':').map(Number);
-        const [endH, endM] = end.split(':').map(Number);
+      const [startH, startM] = start.split(':').map(Number);
+      const [endH, endM] = end.split(':').map(Number);
 
-        let startMinutes = startH * 60 + startM;
-        let endMinutes = endH * 60 + endM;
+      let startMinutes = startH * 60 + startM;
+      let endMinutes = endH * 60 + endM;
 
-        if (endMinutes <= startMinutes) {
-            endMinutes += 24 * 60;
-        }
+      if (endMinutes <= startMinutes) {
+        endMinutes += 24 * 60;
+      }
 
-        const hours = parseFloat(((endMinutes - startMinutes) / 60).toFixed(1));
+      const hours = parseFloat(((endMinutes - startMinutes) / 60).toFixed(1));
 
-        let quality = 5;
-        if (hours >= 7 && hours <= 9) {
-            quality = 8;
-        } else if (hours >= 6 && hours < 7) {
-            quality = 6;
-        } else if (hours > 9 && hours <= 10) {
-            quality = 7;
-        } else if (hours <= 5) {
-            quality = 3;
-        }
+      let quality = 5;
+      if (hours >= 7 && hours <= 9) quality = 8;
+      else if (hours >= 6 && hours < 7) quality = 6;
+      else if (hours > 9 && hours <= 10) quality = 7;
+      else if (hours <= 5) quality = 3;
 
-        if (startH >= 1 && startH < 6) {
-            quality = Math.max(1, quality - 2);
-        }
+      if (startH >= 1 && startH < 6) quality = Math.max(1, quality - 2);
+      quality = Math.max(1, Math.min(10, quality));
 
-        quality = Math.max(1, Math.min(10, quality));
-
-        document.getElementById('sleep-hours-calc').textContent = hours + 'ч';
-        document.getElementById('sleep-quality-calc').textContent = quality + '/10';
-        document.getElementById('sleep-calc').style.display = 'block';
+      document.getElementById('sleep-hours-calc').textContent = hours;
+      document.getElementById('sleep-quality-calc').textContent = `${quality}/10`;
+      document.getElementById('sleep-calc').style.display = 'block';
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        tg.ready();
-        initUser();
+      tg.ready();
+      initUser();
 
-        document.getElementById('sleep-date').value = isoDateToday();
-        document.getElementById('weight-date').value = isoDateToday();
+      document.getElementById('sleep-date').value = isoDateToday();
+      document.getElementById('weight-date').value = isoDateToday();
 
-        document.getElementById('sleep-start').addEventListener('change', calcSleep);
-        document.getElementById('sleep-end').addEventListener('change', calcSleep);
+      document.getElementById('sleep-start').addEventListener('change', calcSleep);
+      document.getElementById('sleep-end').addEventListener('change', calcSleep);
 
-        document.getElementById('btn-save-sleep').addEventListener('click', async () => {
-            if (!telegramId) {
-                setStatus('Нет telegramId', 'err');
-                return;
-            }
-            const date = document.getElementById('sleep-date').value;
-            const sleepStart = document.getElementById('sleep-start').value;
-            const sleepEnd = document.getElementById('sleep-end').value;
-            const notes = document.getElementById('sleep-notes').value.trim();
+      document.getElementById('btn-save-sleep').addEventListener('click', async () => {
+        if (!telegramId) {
+          setStatus('❌ Ошибка: telegramId не найден', 'err');
+          return;
+        }
 
-            if (!date || !sleepStart || !sleepEnd) {
-                setStatus('Укажи все поля', 'err');
-                return;
-            }
+        const date = document.getElementById('sleep-date').value;
+        const sleepStart = document.getElementById('sleep-start').value;
+        const sleepEnd = document.getElementById('sleep-end').value;
+        const notes = document.getElementById('sleep-notes').value.trim();
 
-            const result = await postJson('/api/sleep', {
-                telegramId,
-                date,
-                sleepStart,
-                sleepEnd,
-                notes
-            });
+        if (!date || !sleepStart || !sleepEnd) {
+          setStatus('❌ Заполни обязательные поля', 'err');
+          return;
+        }
 
-            if (result.ok) {
-                setStatus('✅ Сон сохранён', 'ok', 2500);
-                document.getElementById('sleep-date').value = isoDateToday();
-                document.getElementById('sleep-start').value = '';
-                document.getElementById('sleep-end').value = '';
-                document.getElementById('sleep-notes').value = '';
-                document.getElementById('sleep-calc').style.display = 'none';
-                setTimeout(() => {
-                    loadTodaySummary();
-                    switchTab('home');
-                }, 1500);
-            } else {
-                setStatus('❌ Ошибка при сохранении', 'err');
-            }
-        });
+        const result = await postJson('/api/sleep', { telegramId, date, sleepStart, sleepEnd, notes });
 
-        document.getElementById('btn-save-weight').addEventListener('click', async () => {
-            if (!telegramId) {
-                setStatus('Нет telegramId', 'err');
-                return;
-            }
-            const date = document.getElementById('weight-date').value;
-            const weight = parseFloat(document.getElementById('weight-value').value);
-            const notes = document.getElementById('weight-notes').value.trim();
+        if (result.ok) {
+          setStatus('✅ Сон записан!', 'ok', 2500);
+          document.getElementById('sleep-date').value = isoDateToday();
+          document.getElementById('sleep-start').value = '';
+          document.getElementById('sleep-end').value = '';
+          document.getElementById('sleep-notes').value = '';
+          document.getElementById('sleep-calc').style.display = 'none';
+          setTimeout(() => {
+            loadTodaySummary();
+            switchTab('home');
+          }, 1500);
+        } else {
+          setStatus('❌ Ошибка при сохранении', 'err');
+        }
+      });
 
-            if (!date || isNaN(weight)) {
-                setStatus('Укажи все поля', 'err');
-                return;
-            }
+      document.getElementById('btn-save-weight').addEventListener('click', async () => {
+        if (!telegramId) {
+          setStatus('❌ Ошибка: telegramId не найден', 'err');
+          return;
+        }
 
-            const result = await postJson('/api/weight', {
-                telegramId,
-                date,
-                weight,
-                notes
-            });
+        const date = document.getElementById('weight-date').value;
+        const weight = parseFloat(document.getElementById('weight-value').value);
+        const notes = document.getElementById('weight-notes').value.trim();
 
-            if (result.ok) {
-                setStatus('✅ Вес сохранён', 'ok', 2500);
-                document.getElementById('weight-date').value = isoDateToday();
-                document.getElementById('weight-value').value = '';
-                document.getElementById('weight-notes').value = '';
-                setTimeout(() => {
-                    loadTodaySummary();
-                    switchTab('home');
-                }, 1500);
-            } else {
-                setStatus('❌ Ошибка при сохранении', 'err');
-            }
-        });
+        if (!date || isNaN(weight)) {
+          setStatus('❌ Заполни обязательные поля', 'err');
+          return;
+        }
 
-        document.getElementById('btn-save-settings').addEventListener('click', async () => {
-            if (!telegramId) {
-                setStatus('Нет telegramId', 'err');
-                return;
-            }
-            const targetWeight = parseFloat(document.getElementById('target-weight').value);
-            const targetSleep = parseFloat(document.getElementById('target-sleep').value);
+        const result = await postJson('/api/weight', { telegramId, date, weight, notes });
 
-            if (isNaN(targetWeight) || isNaN(targetSleep)) {
-                setStatus('Укажи обе цели', 'err');
-                return;
-            }
+        if (result.ok) {
+          setStatus('✅ Вес записан!', 'ok', 2500);
+          document.getElementById('weight-date').value = isoDateToday();
+          document.getElementById('weight-value').value = '';
+          document.getElementById('weight-notes').value = '';
+          setTimeout(() => {
+            loadTodaySummary();
+            switchTab('home');
+          }, 1500);
+        } else {
+          setStatus('❌ Ошибка при сохранении', 'err');
+        }
+      });
 
-            const result = await postJson('/api/settings', {
-                telegramId,
-                targetWeightKg: targetWeight,
-                targetSleepHours: targetSleep
-            });
+      document.getElementById('btn-save-settings').addEventListener('click', async () => {
+        if (!telegramId) {
+          setStatus('❌ Ошибка: telegramId не найден', 'err');
+          return;
+        }
 
-            if (result.ok) {
-                setStatus('✅ Цели сохранены', 'ok', 2500);
-                setTimeout(() => {
-                    loadTodaySummary();
-                    switchTab('home');
-                }, 1500);
-            } else {
-                setStatus('❌ Ошибка при сохранении', 'err');
-            }
-        });
+        const targetWeight = parseFloat(document.getElementById('target-weight').value);
+        const targetSleep = parseFloat(document.getElementById('target-sleep').value);
+
+        if (isNaN(targetWeight) || isNaN(targetSleep)) {
+          setStatus('❌ Заполни обязательные поля', 'err');
+          return;
+        }
+
+        const result = await postJson('/api/settings', { telegramId, targetWeightKg: targetWeight, targetSleepHours: targetSleep });
+
+        if (result.ok) {
+          setStatus('✅ Цели сохранены!', 'ok', 2500);
+          setTimeout(() => {
+            loadTodaySummary();
+            switchTab('home');
+          }, 1500);
+        } else {
+          setStatus('❌ Ошибка при сохранении', 'err');
+        }
+      });
     });
-</script>
+  </script>
 </body>
 </html>
