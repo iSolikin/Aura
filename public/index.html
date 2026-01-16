@@ -1313,6 +1313,7 @@
         if (day.weight) {
           if (Array.isArray(day.weight)) {
             day.weight.forEach(w => {
+              const createdTime = w.created_at ? formatTimeWithTimezone(w.created_at) : '—';
               const row = document.createElement('div');
               row.className = 'history-row';
               row.innerHTML = `
@@ -1320,6 +1321,7 @@
                   <span class="icon">⚖️</span>
                   <div class="history-main">${w.weight_kg}кг</div>
                 </div>
+                <div class="history-sub">${createdTime}</div>
               `;
               card.appendChild(row);
 
@@ -1335,6 +1337,21 @@
 
         container.appendChild(card);
       });
+    }
+
+    // ============ TIME FORMATTING ============
+
+    function formatTimeWithTimezone(isoString) {
+      // Convert ISO string to Date object
+      const date = new Date(isoString);
+      
+      // Ekaterinburg is UTC+5 (no DST)
+      const ekaterinburgTime = new Date(date.getTime() + (5 * 60 * 60 * 1000) - (date.getTimezoneOffset() * 60 * 1000));
+      
+      const hours = String(ekaterinburgTime.getHours()).padStart(2, '0');
+      const minutes = String(ekaterinburgTime.getMinutes()).padStart(2, '0');
+      
+      return `${hours}:${minutes}`;
     }
 
     // ============ CHARTS ============
