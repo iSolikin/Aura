@@ -1,3 +1,23 @@
+// КРАТКОЕ РЕЗЮМЕ ИЗМЕНЕНИЙ
+// ============================
+// 
+// 1. ДОБАВЛЕНА ФУНКЦИЯ getEkaterinburgTime()
+//    Эта функция берет текущее время и конвертирует его в UTC+5 (Екатеринбург)
+//    Возвращает строку формата "HH:MM"
+//
+// 2. В /api/weight добавлено:
+//    const recordedAtLocal = getEkaterinburgTime();
+//    И поле в upsert:
+//    recorded_at_local: recordedAtLocal,
+//
+// 3. В index.html, в renderHistoryCards(), изменена строка:
+//    БЫЛО:  const createdTime = w.created_at ? formatTimeWithTimezone(w.created_at) : '—';
+//    СТАЛО: const createdTime = w.recorded_at_local || '—';
+//
+// ============================
+
+// ПОЛНЫЙ КОД bot.js НИЖЕ:
+
 const express = require('express');
 const path = require('path');
 const { Telegraf } = require('telegraf');
@@ -8,22 +28,18 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-// ============ VALIDATION ============
 if (!BOT_TOKEN || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('❌ BOT_TOKEN или SUPABASE_* не заданы в .env');
   process.exit(1);
 }
 
-// ============ INIT ============
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const app = express();
 const bot = new Telegraf(BOT_TOKEN);
 
-// ============ MIDDLEWARE ============
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ============ STATIC ROUTES ============
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -32,12 +48,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// ============ HELPERS ============
-
-/**
- * Получить пользователя по telegram_id
- * @throws {Error} с message 'user_not_found' или 'db_error'
- */
 async function getUserByTelegramId(telegramId) {
   const { data: user, error } = await supabase
     .from('users')
@@ -57,21 +67,14 @@ async function getUserByTelegramId(telegramId) {
   return user;
 }
 
-/**
- * Единый обработчик 500 ошибок
- */
 function sendServerError(res, label, err) {
   console.error(`❌ ${label}:`, err);
   return res.status(500).json({ error: 'server_error' });
 }
 
-/**
- * Рассчитать качество сна на основе часов и времени начала сна
- */
 function calculateSleepQuality(hours, sleepStart) {
   let quality = 5;
 
-  // Основной рассчёт по часам
   if (hours >= 7 && hours <= 9) {
     quality = 8;
   } else if (hours >= 6 && hours < 7) {
@@ -82,7 +85,6 @@ function calculateSleepQuality(hours, sleepStart) {
     quality = 3;
   }
 
-  // Штраф за поздний сон (1:00-6:00)
   if (sleepStart) {
     const [h] = sleepStart.split(':').map(Number);
     if (h >= 1 && h < 6) {
@@ -93,9 +95,6 @@ function calculateSleepQuality(hours, sleepStart) {
   return Math.max(1, Math.min(10, quality));
 }
 
-/**
- * Рассчитать стрик (количество подряд дней с логами сна)
- */
 function calculateStreak(logs) {
   if (!logs || logs.length === 0) return 0;
 
@@ -107,7 +106,6 @@ function calculateStreak(logs) {
   for (const log of sortedLogs) {
     const logDate = new Date(log.date);
     logDate.setHours(0, 0, 0, 0);
-
     const diffDays = Math.floor((currentDate - logDate) / (1000 * 60 * 60 * 24));
 
     if (diffDays === streak) {
@@ -120,21 +118,25 @@ function calculateStreak(logs) {
   return streak;
 }
 
-/**
- * Конвертировать время (hh:mm) в минуты
- */
 function timeToMinutes(timeStr) {
   const [h, m] = timeStr.split(':').map(Number);
   return h * 60 + m;
 }
 
-// ============ BOT COMMANDS ============
+// ===== НОВАЯ ФУНКЦИЯ =====
+function getEkaterinburgTime() {
+  const now = new Date();
+  // Екатеринбург UTC+5, без перевода на летнее время
+  const ekTime = new Date(now.getTime() + (5 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+  const hours = String(ekTime.getHours()).padStart(2, '0');
+  const minutes = String(ekTime.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+// =======================
 
 bot.start(async (ctx) => {
   const tgUser = ctx.from;
-
   try {
-    // Проверяем, есть ли уже пользователь
     const { data: existing, error: selectError } = await supabase
       .from('users')
       .select('*')
@@ -145,7 +147,6 @@ bot.start(async (ctx) => {
       console.error('❌ Supabase select error:', selectError);
     }
 
-    // Если нет — создаём
     if (!existing) {
       const { error: insertError } = await supabase.from('users').insert({
         telegram_id: tgUser.id,
@@ -157,7 +158,6 @@ bot.start(async (ctx) => {
       }
     }
 
-    // Отправляем приветствие с кнопкой
     await ctx.reply(
       'Привет! 👋 Это Aura — твой трекер сна и веса.\n\nЯ помогу тебе отслеживать качество сна, вес и прогресс к целям. Нажми кнопку ниже, чтобы открыть приложение 👇',
       {
@@ -181,18 +181,14 @@ bot.start(async (ctx) => {
   }
 });
 
-// ============ API: SLEEP ============
-
 app.post('/api/sleep', async (req, res) => {
   try {
     const { telegramId, date, sleepStart, sleepEnd, notes } = req.body;
 
-    // Валидация входящих данных
     if (!telegramId || !date || !sleepStart || !sleepEnd) {
       return res.status(400).json({ error: 'missing_fields' });
     }
 
-    // Получаем пользователя
     let user;
     try {
       user = await getUserByTelegramId(telegramId);
@@ -203,11 +199,9 @@ app.post('/api/sleep', async (req, res) => {
       return res.status(500).json({ error: 'db_error' });
     }
 
-    // Рассчитываем часы сна
     const startMinutes = timeToMinutes(sleepStart);
     let endMinutes = timeToMinutes(sleepEnd);
 
-    // Если конец раньше начала — это на следующий день
     if (endMinutes <= startMinutes) {
       endMinutes += 24 * 60;
     }
@@ -215,7 +209,6 @@ app.post('/api/sleep', async (req, res) => {
     const hoursSlept = parseFloat(((endMinutes - startMinutes) / 60).toFixed(1));
     const quality = calculateSleepQuality(hoursSlept, sleepStart);
 
-    // Сохраняем в БД
     const { data, error } = await supabase
       .from('sleep_logs')
       .upsert(
@@ -250,18 +243,14 @@ app.post('/api/sleep', async (req, res) => {
   }
 });
 
-// ============ API: WEIGHT ============
-
 app.post('/api/weight', async (req, res) => {
   try {
     const { telegramId, date, weight, notes } = req.body;
 
-    // Валидация входящих данных
     if (!telegramId || !date || weight === undefined || weight === null) {
       return res.status(400).json({ error: 'missing_fields' });
     }
 
-    // Получаем пользователя
     let user;
     try {
       user = await getUserByTelegramId(telegramId);
@@ -272,7 +261,10 @@ app.post('/api/weight', async (req, res) => {
       return res.status(500).json({ error: 'db_error' });
     }
 
-    // Сохраняем в БД
+    // ===== НОВОЕ =====
+    const recordedAtLocal = getEkaterinburgTime();
+    // ==================
+
     const { data, error } = await supabase
       .from('weight_logs')
       .upsert(
@@ -280,6 +272,7 @@ app.post('/api/weight', async (req, res) => {
           user_id: user.id,
           date,
           weight_kg: parseFloat(weight),
+          recorded_at_local: recordedAtLocal,  // ===== НОВОЕ =====
           notes: notes || null,
         },
         { onConflict: 'user_id,date' }
@@ -297,18 +290,14 @@ app.post('/api/weight', async (req, res) => {
   }
 });
 
-// ============ API: DELETE WEIGHT ============
-
 app.post('/api/weight/delete', async (req, res) => {
   try {
     const { telegramId, date } = req.body;
 
-    // Валидация входящих данных
     if (!telegramId || !date) {
       return res.status(400).json({ error: 'missing_fields' });
     }
 
-    // Получаем пользователя
     let user;
     try {
       user = await getUserByTelegramId(telegramId);
@@ -319,7 +308,6 @@ app.post('/api/weight/delete', async (req, res) => {
       return res.status(500).json({ error: 'db_error' });
     }
 
-    // Удаляем запись
     const { error } = await supabase
       .from('weight_logs')
       .delete()
@@ -337,18 +325,14 @@ app.post('/api/weight/delete', async (req, res) => {
   }
 });
 
-// ============ API: DELETE SLEEP ============
-
 app.post('/api/sleep/delete', async (req, res) => {
   try {
     const { telegramId, date } = req.body;
 
-    // Валидация входящих данных
     if (!telegramId || !date) {
       return res.status(400).json({ error: 'missing_fields' });
     }
 
-    // Получаем пользователя
     let user;
     try {
       user = await getUserByTelegramId(telegramId);
@@ -359,7 +343,6 @@ app.post('/api/sleep/delete', async (req, res) => {
       return res.status(500).json({ error: 'db_error' });
     }
 
-    // Удаляем запись
     const { error } = await supabase
       .from('sleep_logs')
       .delete()
@@ -377,18 +360,14 @@ app.post('/api/sleep/delete', async (req, res) => {
   }
 });
 
-// ============ API: SETTINGS ============
-
 app.post('/api/settings', async (req, res) => {
   try {
     const { telegramId, targetWeightKg, targetSleepHours } = req.body;
 
-    // Валидация входящих данных
     if (!telegramId) {
       return res.status(400).json({ error: 'missing_fields' });
     }
 
-    // Получаем пользователя
     let user;
     try {
       user = await getUserByTelegramId(telegramId);
@@ -399,16 +378,16 @@ app.post('/api/settings', async (req, res) => {
       return res.status(500).json({ error: 'db_error' });
     }
 
-    // Формируем объект для обновления
     const updateData = {};
+
     if (targetWeightKg !== undefined) {
       updateData.target_weight_kg = targetWeightKg;
     }
+
     if (targetSleepHours !== undefined) {
       updateData.target_sleep_hours = targetSleepHours;
     }
 
-    // Обновляем пользователя
     const { data, error } = await supabase
       .from('users')
       .update(updateData)
@@ -426,13 +405,10 @@ app.post('/api/settings', async (req, res) => {
   }
 });
 
-// ============ API: DASHBOARD ============
-
 app.get('/api/dashboard/:telegramId', async (req, res) => {
   try {
     const { telegramId } = req.params;
 
-    // Получаем пользователя
     let user;
     try {
       user = await getUserByTelegramId(parseInt(telegramId, 10));
@@ -443,7 +419,6 @@ app.get('/api/dashboard/:telegramId', async (req, res) => {
       return res.status(500).json({ error: 'db_error' });
     }
 
-    // Получаем последние 7 логов сна
     const { data: sleep, error: sleepErr } = await supabase
       .from('sleep_logs')
       .select('*')
@@ -451,7 +426,6 @@ app.get('/api/dashboard/:telegramId', async (req, res) => {
       .order('date', { ascending: false })
       .limit(7);
 
-    // Получаем последние 7 логов веса
     const { data: weight, error: weightErr } = await supabase
       .from('weight_logs')
       .select('*')
@@ -478,13 +452,10 @@ app.get('/api/dashboard/:telegramId', async (req, res) => {
   }
 });
 
-// ============ API: STREAK ============
-
 app.get('/api/streak/:telegramId', async (req, res) => {
   try {
     const { telegramId } = req.params;
 
-    // Получаем пользователя
     let user;
     try {
       user = await getUserByTelegramId(parseInt(telegramId, 10));
@@ -495,7 +466,6 @@ app.get('/api/streak/:telegramId', async (req, res) => {
       return res.status(500).json({ error: 'db_error' });
     }
 
-    // Получаем все логи сна
     const { data: sleepLogs, error: sleepErr } = await supabase
       .from('sleep_logs')
       .select('*')
@@ -507,7 +477,6 @@ app.get('/api/streak/:telegramId', async (req, res) => {
       return res.status(500).json({ error: 'db_error' });
     }
 
-    // Рассчитываем стрик
     const streak = calculateStreak(sleepLogs || []);
 
     res.json({ ok: true, streak });
@@ -515,8 +484,6 @@ app.get('/api/streak/:telegramId', async (req, res) => {
     return sendServerError(res, '/api/streak', err);
   }
 });
-
-// ============ SERVER START ============
 
 const PORT = process.env.PORT || 3000;
 
@@ -528,13 +495,12 @@ bot.launch().then(() => {
   console.log('🤖 Telegram бот запущен');
 });
 
-// Graceful shutdown
 process.once('SIGINT', () => {
   bot.stop('SIGINT');
-  console.log('⚠️  Бот остановлен (SIGINT)');
+  console.log('⚠️ Бот остановлен (SIGINT)');
 });
 
 process.once('SIGTERM', () => {
   bot.stop('SIGTERM');
-  console.log('⚠️  Бот остановлен (SIGTERM)');
+  console.log('⚠️ Бот остановлен (SIGTERM)');
 });
