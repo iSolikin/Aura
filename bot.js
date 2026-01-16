@@ -1,23 +1,3 @@
-// КРАТКОЕ РЕЗЮМЕ ИЗМЕНЕНИЙ
-// ============================
-// 
-// 1. ДОБАВЛЕНА ФУНКЦИЯ getEkaterinburgTime()
-//    Эта функция берет текущее время и конвертирует его в UTC+5 (Екатеринбург)
-//    Возвращает строку формата "HH:MM"
-//
-// 2. В /api/weight добавлено:
-//    const recordedAtLocal = getEkaterinburgTime();
-//    И поле в upsert:
-//    recorded_at_local: recordedAtLocal,
-//
-// 3. В index.html, в renderHistoryCards(), изменена строка:
-//    БЫЛО:  const createdTime = w.created_at ? formatTimeWithTimezone(w.created_at) : '—';
-//    СТАЛО: const createdTime = w.recorded_at_local || '—';
-//
-// ============================
-
-// ПОЛНЫЙ КОД bot.js НИЖЕ:
-
 const express = require('express');
 const path = require('path');
 const { Telegraf } = require('telegraf');
@@ -74,7 +54,6 @@ function sendServerError(res, label, err) {
 
 function calculateSleepQuality(hours, sleepStart) {
   let quality = 5;
-
   if (hours >= 7 && hours <= 9) {
     quality = 8;
   } else if (hours >= 6 && hours < 7) {
@@ -84,37 +63,31 @@ function calculateSleepQuality(hours, sleepStart) {
   } else if (hours <= 5) {
     quality = 3;
   }
-
   if (sleepStart) {
     const [h] = sleepStart.split(':').map(Number);
     if (h >= 1 && h < 6) {
       quality = Math.max(1, quality - 2);
     }
   }
-
   return Math.max(1, Math.min(10, quality));
 }
 
 function calculateStreak(logs) {
   if (!logs || logs.length === 0) return 0;
-
   const sortedLogs = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date));
   let streak = 0;
   let currentDate = new Date();
   currentDate.setHours(0, 0, 0, 0);
-
   for (const log of sortedLogs) {
     const logDate = new Date(log.date);
     logDate.setHours(0, 0, 0, 0);
     const diffDays = Math.floor((currentDate - logDate) / (1000 * 60 * 60 * 24));
-
     if (diffDays === streak) {
       streak++;
     } else {
       break;
     }
   }
-
   return streak;
 }
 
@@ -122,17 +95,6 @@ function timeToMinutes(timeStr) {
   const [h, m] = timeStr.split(':').map(Number);
   return h * 60 + m;
 }
-
-// ===== НОВАЯ ФУНКЦИЯ =====
-function getEkaterinburgTime() {
-  const now = new Date();
-  // Екатеринбург UTC+5, без перевода на летнее время
-  const ekTime = new Date(now.getTime() + (5 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
-  const hours = String(ekTime.getHours()).padStart(2, '0');
-  const minutes = String(ekTime.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
-// =======================
 
 bot.start(async (ctx) => {
   const tgUser = ctx.from;
@@ -261,10 +223,6 @@ app.post('/api/weight', async (req, res) => {
       return res.status(500).json({ error: 'db_error' });
     }
 
-    // ===== НОВОЕ =====
-    const recordedAtLocal = getEkaterinburgTime();
-    // ==================
-
     const { data, error } = await supabase
       .from('weight_logs')
       .upsert(
@@ -272,7 +230,6 @@ app.post('/api/weight', async (req, res) => {
           user_id: user.id,
           date,
           weight_kg: parseFloat(weight),
-          recorded_at_local: recordedAtLocal,  // ===== НОВОЕ =====
           notes: notes || null,
         },
         { onConflict: 'user_id,date' }

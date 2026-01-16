@@ -708,6 +708,32 @@
       font-style: italic;
     }
 
+    .history-delete-btn {
+      background: rgba(255, 107, 107, 0.2);
+      border: 1px solid rgba(255, 107, 107, 0.4);
+      color: #ff6b6b;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .history-delete-btn:hover {
+      background: rgba(255, 107, 107, 0.3);
+      border-color: #ff6b6b;
+    }
+
+    .history-delete-btn:active {
+      transform: scale(0.95);
+    }
+
+
     /* Responsive */
     @media (max-width: 480px) {
       .app {
@@ -1311,17 +1337,18 @@
         }
 
         if (day.weight) {
-            if (Array.isArray(day.weight)) {
-                day.weight.forEach(w => {
-                const row = document.createElement('div');
-                row.className = 'history-row';
-                row.innerHTML = `
-                    <div class="history-label">
-                    <span class="icon">⚖️</span>
-                    <div class="history-main">${w.weight_kg}кг</div>
-                    </div>
-                `;
-                card.appendChild(row);
+          if (Array.isArray(day.weight)) {
+            day.weight.forEach(w => {
+              const row = document.createElement('div');
+              row.className = 'history-row';
+              row.innerHTML = `
+                <div class="history-label">
+                  <span class="icon">⚖️</span>
+                  <div class="history-main">${w.weight_kg}кг</div>
+                </div>
+                <button class="history-delete-btn" data-type="weight" data-date="${date}" title="Удалить">✕</button>
+              `;
+              card.appendChild(row);
 
               // Show weight notes if exist
               if (w.notes) {
@@ -1332,6 +1359,7 @@
             });
           }
         }
+
 
         container.appendChild(card);
       });
@@ -1631,6 +1659,32 @@
         } else {
           setStatus('❌ Ошибка при сохранении', 'err');
         }
+
+                // Удаление записей из истории
+        document.addEventListener('click', async (e) => {
+          if (e.target.classList.contains('history-delete-btn')) {
+            const type = e.target.getAttribute('data-type');
+            const date = e.target.getAttribute('data-date');
+
+            if (!confirm(`⚠️ Удалить запись за ${date}?`)) return;
+
+            try {
+              const endpoint = type === 'weight' ? '/api/weight/delete' : '/api/sleep/delete';
+              const result = await postJson(endpoint, { telegramId, date });
+
+              if (result.ok) {
+                setStatus('✅ Запись удалена!', 'ok', 2000);
+                setTimeout(() => loadHistory(), 500);
+              } else {
+                setStatus('❌ Ошибка при удалении', 'err');
+              }
+            } catch (err) {
+              console.error('Delete error:', err);
+              setStatus('❌ Ошибка при удалении', 'err');
+            }
+          }
+        });
+
       });
     });
   </script>
