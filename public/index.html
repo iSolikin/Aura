@@ -699,6 +699,15 @@
       color: #9ca3af;
     }
 
+    /* Notes styling */
+    .history-notes {
+      font-size: 11px;
+      color: #a0aec0;
+      padding-left: 20px;
+      margin-top: 2px;
+      font-style: italic;
+    }
+
     /* Responsive */
     @media (max-width: 480px) {
       .app {
@@ -1292,13 +1301,18 @@
             <div class="history-sub">${timePart}</div>
           `;
           card.appendChild(row);
+
+          // Show sleep notes if exist
+          if (s.notes) {
+            const notesRow = document.createElement('div');
+            notesRow.innerHTML = `<div class="history-notes">📝 ${s.notes}</div>`;
+            card.appendChild(notesRow);
+          }
         }
 
         if (day.weight) {
           if (Array.isArray(day.weight)) {
             day.weight.forEach(w => {
-              const created = w.created_at ? new Date(w.created_at) : null;
-              const timeStr = created ? created.toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit' }) : '—';
               const row = document.createElement('div');
               row.className = 'history-row';
               row.innerHTML = `
@@ -1306,9 +1320,15 @@
                   <span class="icon">⚖️</span>
                   <div class="history-main">${w.weight_kg}кг</div>
                 </div>
-                <div class="history-sub">${timeStr}</div>
               `;
               card.appendChild(row);
+
+              // Show weight notes if exist
+              if (w.notes) {
+                const notesRow = document.createElement('div');
+                notesRow.innerHTML = `<div class="history-notes">📝 ${w.notes}</div>`;
+                card.appendChild(notesRow);
+              }
             });
           }
         }
@@ -1451,7 +1471,6 @@
       currentSleepFilter = period;
       document.querySelectorAll(`[onclick*="filterSleepStats"]`).forEach(btn => btn.classList.remove('active'));
       event.target.classList.add('active');
-      // По факту мы уже берем последние 7 дней, месячный вид сделаем если понадобится
     }
 
     function filterWeightStats(period) {
