@@ -1311,19 +1311,17 @@
         }
 
         if (day.weight) {
-          if (Array.isArray(day.weight)) {
-            day.weight.forEach(w => {
-              const createdTime = w.created_at ? formatTimeWithTimezone(w.created_at) : '—';
-              const row = document.createElement('div');
-              row.className = 'history-row';
-              row.innerHTML = `
-                <div class="history-label">
-                  <span class="icon">⚖️</span>
-                  <div class="history-main">${w.weight_kg}кг</div>
-                </div>
-                <div class="history-sub">${createdTime}</div>
-              `;
-              card.appendChild(row);
+            if (Array.isArray(day.weight)) {
+                day.weight.forEach(w => {
+                const row = document.createElement('div');
+                row.className = 'history-row';
+                row.innerHTML = `
+                    <div class="history-label">
+                    <span class="icon">⚖️</span>
+                    <div class="history-main">${w.weight_kg}кг</div>
+                    </div>
+                `;
+                card.appendChild(row);
 
               // Show weight notes if exist
               if (w.notes) {
